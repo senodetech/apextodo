@@ -14,10 +14,11 @@
 *.sqlite3
 *.db
 
-# Helper Scripts
-build_pr_branches.py
-stagger_history.py
-create_commits.ps1
+# Helper Scripts & Python files
+*.py
+*.pyc
+__pycache__/
+*.ps1
 
 # Environment & Secrets
 **/.env
