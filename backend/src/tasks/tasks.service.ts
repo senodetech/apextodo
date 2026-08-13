@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
 import { Task, TaskPriority } from './entities/task.entity';
@@ -13,11 +13,62 @@ export interface TaskQueryFilter {
 }
 
 @Injectable()
-export class TasksService {
+export class TasksService implements OnModuleInit {
   constructor(
     @InjectRepository(Task)
     private readonly taskRepository: Repository<Task>,
   ) {}
+
+  async onModuleInit() {
+    const count = await this.taskRepository.count();
+    if (count === 0) {
+      console.log('[TasksService] Database is empty. Seeding initial demo tasks...');
+      await this.seedInitialTasks();
+    }
+  }
+
+  async seedInitialTasks(): Promise<Task[]> {
+    const sampleTasks = [
+      {
+        title: 'Setup PostgreSQL & TypeORM Database',
+        description: 'Configure todo_db schema synchronization, connection pool, and TypeORM entity models.',
+        completed: true,
+        priority: TaskPriority.URGENT,
+        category: 'Database',
+      },
+      {
+        title: 'Build Angular 19 Standalone Signals UI',
+        description: 'Implement reactive state management using Signal store, Glassmorphic theme tokens, and custom CSS.',
+        completed: true,
+        priority: TaskPriority.HIGH,
+        category: 'Frontend',
+      },
+      {
+        title: 'Deploy NestJS REST API Controller & DTOs',
+        description: 'Create CRUD endpoints, request payload validation pipes, and CORS integration middleware.',
+        completed: false,
+        priority: TaskPriority.HIGH,
+        category: 'Backend',
+      },
+      {
+        title: 'Implement Interactive Kanban Board View',
+        description: 'Enable dual-view layout switching between standard list view and column-based Kanban workspace.',
+        completed: false,
+        priority: TaskPriority.MEDIUM,
+        category: 'Frontend',
+      },
+      {
+        title: 'Write Technical Architecture README',
+        description: 'Draft senior engineering setup documentation, API specifications, and environment variable references.',
+        completed: true,
+        priority: TaskPriority.MEDIUM,
+        category: 'Docs',
+      },
+    ];
+
+    const tasks = this.taskRepository.create(sampleTasks);
+    return this.taskRepository.save(tasks);
+  }
 
   async findAll(filter: TaskQueryFilter): Promise<Task[]> {
     const query = this.taskRepository.createQueryBuilder('task');
