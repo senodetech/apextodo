@@ -6,6 +6,7 @@ import { TaskToolbarComponent } from './components/task-toolbar/task-toolbar.com
 import { TaskListComponent } from './components/task-list/task-list.component';
 import { KanbanBoardComponent } from './components/kanban-board/kanban-board.component';
 import { TaskFormComponent } from './components/task-form/task-form.component';
+import { GoogleAuthModalComponent } from './components/google-auth-modal/google-auth-modal.component';
 import { Task } from './models/task.model';
 
 @Component({
@@ -19,11 +20,15 @@ import { Task } from './models/task.model';
     TaskListComponent,
     KanbanBoardComponent,
     TaskFormComponent,
+    GoogleAuthModalComponent,
   ],
   template: `
     <div class="app-layout">
       <!-- Header Bar -->
-      <app-header (openCreateModal)="openCreateModal()"></app-header>
+      <app-header
+        (openCreateModal)="openCreateModal()"
+        (openGoogleAuthModal)="showAuthModal = true"
+      ></app-header>
 
       <!-- Main Dashboard Content -->
       <main class="main-content">
@@ -57,6 +62,12 @@ import { Task } from './models/task.model';
         [editingTask]="editingTask"
         (closeModal)="closeModal()"
       ></app-task-form>
+
+      <!-- Google OAuth Sign In Modal -->
+      <app-google-auth-modal
+        *ngIf="showAuthModal"
+        (closeModal)="showAuthModal = false"
+      ></app-google-auth-modal>
     </div>
   `,
   styles: [`
@@ -75,6 +86,7 @@ import { Task } from './models/task.model';
 export class AppComponent {
   currentView: 'list' | 'kanban' = 'list';
   showModal = false;
+  showAuthModal = false;
   editingTask: Task | null = null;
 
   openCreateModal() {

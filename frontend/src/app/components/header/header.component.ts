@@ -36,20 +36,14 @@ import { AuthService } from '../../services/auth.service';
 
         <!-- Auth Section -->
         <ng-container *ngIf="authService.currentUser(); else loginBtnTemplate">
-          <!-- Active User Badge & Account Switcher -->
+          <!-- Active User Profile Badge -->
           <div class="user-profile-badge">
             <img [src]="authService.currentUser()?.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=senapathy'" alt="Avatar" class="user-avatar" />
             <div class="user-details">
               <span class="user-name">{{ authService.currentUser()?.displayName }}</span>
               <span class="user-email">{{ authService.currentUser()?.email }}</span>
             </div>
-            
-            <!-- Quick Account Switcher Dropdown -->
-            <select class="account-switcher" (change)="switchAccount($event)" [value]="authService.currentUser()?.email">
-              <option value="senapathybglore@gmail.com">👤 Senapathy (senapathybglore&#64;gmail.com)</option>
-              <option value="senodetech@gmail.com">👤 SenoTech (senodetech&#64;gmail.com)</option>
-              <option value="alex.techlead@apextasks.dev">🛠️ Alex TechLead (alex.techlead&#64;apextasks.dev)</option>
-            </select>
+            <span class="provider-tag">Google OAuth</span>
           </div>
 
           <button class="btn btn-secondary btn-logout" (click)="authService.logout()" title="Sign out">
@@ -63,7 +57,7 @@ import { AuthService } from '../../services/auth.service';
         </ng-container>
 
         <ng-template #loginBtnTemplate>
-          <button class="btn btn-google" (click)="loginWithGoogle()">
+          <button class="btn btn-google" (click)="openGoogleAuthModal.emit()">
             <svg width="18" height="18" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -151,7 +145,7 @@ import { AuthService } from '../../services/auth.service';
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 6px 12px;
+      padding: 6px 14px;
       background: rgba(15, 23, 42, 0.6);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
@@ -177,19 +171,15 @@ import { AuthService } from '../../services/auth.service';
       font-size: 0.72rem;
       color: var(--text-muted);
     }
-    .account-switcher {
-      background: rgba(30, 41, 59, 0.8);
-      color: var(--text-primary);
-      border: 1px solid var(--border-subtle);
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 0.78rem;
-      cursor: pointer;
-      outline: none;
-    }
-    .account-switcher option {
-      background: #0f172a;
-      color: #fff;
+    .provider-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: rgba(66, 133, 244, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(66, 133, 244, 0.3);
     }
     .btn-google {
       background: rgba(255, 255, 255, 0.08);
@@ -214,18 +204,8 @@ import { AuthService } from '../../services/auth.service';
 })
 export class HeaderComponent {
   @Output() openCreateModal = new EventEmitter<void>();
+  @Output() openGoogleAuthModal = new EventEmitter<void>();
   today = new Date();
   taskService = inject(TaskService);
   authService = inject(AuthService);
-
-  loginWithGoogle() {
-    this.authService.loginWithGoogle('senapathybglore@gmail.com');
-  }
-
-  switchAccount(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    if (select.value) {
-      this.authService.loginAsUser(select.value);
-    }
-  }
 }
