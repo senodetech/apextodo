@@ -119,7 +119,20 @@ import { TaskService } from '../../services/task.service';
     .search-box {
       position: relative;
       flex: 1;
-      min-width: 240px;
+      min-width: 260px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+    }
+    .search-box .search-input {
+      width: 100% !important;
+      height: 100% !important;
+      display: block !important;
+      box-sizing: border-box !important;
+      padding: 0 16px 0 44px !important;
+      margin: 0 !important;
+      line-height: 42px !important;
+      align-self: stretch !important;
     }
     .search-icon {
       position: absolute;
@@ -127,9 +140,8 @@ import { TaskService } from '../../services/task.service';
       top: 50%;
       transform: translateY(-50%);
       color: var(--text-muted);
-    }
-    .search-input {
-      padding-left: 42px;
+      z-index: 2;
+      pointer-events: none;
     }
     .filters-row {
       display: flex;
