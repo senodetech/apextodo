@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { User } from '../../users/entities/user.entity';
 
 export enum TaskPriority {
   LOW = 'LOW',
@@ -33,6 +34,13 @@ export class Task {
 
   @Column({ nullable: true })
   dueDate?: Date;
+
+  @Column({ type: 'varchar', nullable: true })
+  userId?: string;
+
+  @ManyToOne(() => User, (user) => user.tasks, { onDelete: 'CASCADE', nullable: true })
+  @JoinColumn({ name: 'userId' })
+  user?: User;
 
   @CreateDateColumn()
   createdAt: Date;

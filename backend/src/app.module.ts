@@ -3,6 +3,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TasksModule } from './tasks/tasks.module';
 import { Task } from './tasks/entities/task.entity';
+import { User } from './users/entities/user.entity';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -24,7 +27,7 @@ import { Task } from './tasks/entities/task.entity';
             username: config.get<string>('DB_USERNAME', 'postgres'),
             password: config.get<string>('DB_PASSWORD', 'postgres'),
             database: config.get<string>('DB_NAME', 'todo_db'),
-            entities: [Task],
+            entities: [Task, User],
             synchronize: true,
           };
         }
@@ -32,11 +35,13 @@ import { Task } from './tasks/entities/task.entity';
         return {
           type: 'better-sqlite3',
           database: 'todo.sqlite',
-          entities: [Task],
+          entities: [Task, User],
           synchronize: true,
         };
       },
     }),
+    UsersModule,
+    AuthModule,
     TasksModule,
   ],
 })

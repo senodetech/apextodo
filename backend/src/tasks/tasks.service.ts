@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, ILike } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Task, TaskPriority } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { UsersService } from '../users/users.service';
 
 export interface TaskQueryFilter {
   completed?: string;
@@ -17,17 +18,33 @@ export class TasksService implements OnModuleInit {
   constructor(
     @InjectRepository(Task)
     private readonly taskRepository: Repository<Task>,
+    private readonly usersService: UsersService,
   ) {}
 
   async onModuleInit() {
-    const count = await this.taskRepository.count();
+    const defaultUser = await this.usersService.findOrCreateUser({
+      email: 'senapathybglore@gmail.com',
+      displayName: 'Senapathy (Google OAuth)',
+      provider: 'google',
+    });
+
+    const unassignedTasks = await this.taskRepository.find({ where: { userId: undefined } });
+    if (unassignedTasks.length > 0) {
+      for (const t of unassignedTasks) {
+        t.userId = defaultUser.id;
+      }
+      await this.taskRepository.save(unassignedTasks);
+      console.log(`[TasksService] Migrated ${unassignedTasks.length} legacy tasks to user ${defaultUser.email}`);
+    }
+
+    const count = await this.taskRepository.count({ where: { userId: defaultUser.id } });
     if (count === 0) {
-      console.log('[TasksService] Database is empty. Seeding initial demo tasks...');
-      await this.seedInitialTasks();
+      console.log('[TasksService] Seeding initial tasks for default user...');
+      await this.seedInitialTasks(defaultUser.id);
     }
   }
 
-  async seedInitialTasks(): Promise<Task[]> {
+  async seedInitialTasks(userId: string): Promise<Task[]> {
     const sampleTasks = [
       {
         title: 'Setup PostgreSQL & TypeORM Database',
@@ -35,6 +52,7 @@ export class TasksService implements OnModuleInit {
         completed: true,
         priority: TaskPriority.URGENT,
         category: 'Database',
+        userId,
       },
       {
         title: 'Build Angular 19 Standalone Signals UI',
@@ -42,6 +60,7 @@ export class TasksService implements OnModuleInit {
         completed: true,
         priority: TaskPriority.HIGH,
         category: 'Frontend',
+        userId,
       },
       {
         title: 'Deploy NestJS REST API Controller & DTOs',
@@ -49,6 +68,7 @@ export class TasksService implements OnModuleInit {
         completed: false,
         priority: TaskPriority.HIGH,
         category: 'Backend',
+        userId,
       },
       {
         title: 'Implement Interactive Kanban Board View',
@@ -56,13 +76,15 @@ export class TasksService implements OnModuleInit {
         completed: false,
         priority: TaskPriority.MEDIUM,
         category: 'Frontend',
+        userId,
       },
       {
-        title: 'Write Technical Architecture README',
-        description: 'Draft senior engineering setup documentation, API specifications, and environment variable references.',
+        title: 'Configure OAuth2 Authentication & NestJS Guards',
+        description: 'Protect task routes using JwtAuthGuard and isolate multi-tenant user task workspaces.',
         completed: true,
-        priority: TaskPriority.MEDIUM,
-        category: 'Docs',
+        priority: TaskPriority.HIGH,
+        category: 'Security',
+        userId,
       },
     ];
 
@@ -70,8 +92,9 @@ export class TasksService implements OnModuleInit {
     return this.taskRepository.save(tasks);
   }
 
-  async findAll(filter: TaskQueryFilter): Promise<Task[]> {
-    const query = this.taskRepository.createQueryBuilder('task');
+  async findAll(filter: TaskQueryFilter, userId: string): Promise<Task[]> {
+    const query = this.taskRepository.createQueryBuilder('task')
+      .where('task.userId = :userId', { userId });
 
     if (filter.completed !== undefined && filter.completed !== 'all') {
       const isCompleted = filter.completed === 'true' || filter.completed === 'completed';
@@ -97,26 +120,27 @@ export class TasksService implements OnModuleInit {
     return query.getMany();
   }
 
-  async findOne(id: string): Promise<Task> {
-    const task = await this.taskRepository.findOne({ where: { id } });
+  async findOne(id: string, userId: string): Promise<Task> {
+    const task = await this.taskRepository.findOne({ where: { id, userId } });
     if (!task) {
       throw new NotFoundException(`Task with ID "${id}" not found`);
     }
     return task;
   }
 
-  async create(createTaskDto: CreateTaskDto): Promise<Task> {
+  async create(createTaskDto: CreateTaskDto, userId: string): Promise<Task> {
     const task = this.taskRepository.create({
       ...createTaskDto,
       priority: createTaskDto.priority || TaskPriority.MEDIUM,
       category: createTaskDto.category || 'General',
       dueDate: createTaskDto.dueDate ? new Date(createTaskDto.dueDate) : undefined,
+      userId,
     });
     return this.taskRepository.save(task);
   }
 
-  async update(id: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
-    const task = await this.findOne(id);
+  async update(id: string, updateTaskDto: UpdateTaskDto, userId: string): Promise<Task> {
+    const task = await this.findOne(id, userId);
     
     if (updateTaskDto.dueDate !== undefined) {
       task.dueDate = updateTaskDto.dueDate ? new Date(updateTaskDto.dueDate) : undefined;
@@ -127,29 +151,28 @@ export class TasksService implements OnModuleInit {
     return this.taskRepository.save(task);
   }
 
-  async remove(id: string): Promise<void> {
-    const result = await this.taskRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Task with ID "${id}" not found`);
-    }
+  async remove(id: string, userId: string): Promise<void> {
+    const task = await this.findOne(id, userId);
+    await this.taskRepository.remove(task);
   }
 
-  async clearCompleted(): Promise<{ count: number }> {
-    const result = await this.taskRepository.delete({ completed: true });
+  async clearCompleted(userId: string): Promise<{ count: number }> {
+    const result = await this.taskRepository.delete({ userId, completed: true });
     return { count: result.affected || 0 };
   }
 
-  async getStats() {
-    const total = await this.taskRepository.count();
-    const completed = await this.taskRepository.count({ where: { completed: true } });
+  async getStats(userId: string) {
+    const total = await this.taskRepository.count({ where: { userId } });
+    const completed = await this.taskRepository.count({ where: { userId, completed: true } });
     const pending = total - completed;
-    const urgentCount = await this.taskRepository.count({ where: { priority: TaskPriority.URGENT, completed: false } });
-    const highCount = await this.taskRepository.count({ where: { priority: TaskPriority.HIGH, completed: false } });
+    const urgentCount = await this.taskRepository.count({ where: { userId, priority: TaskPriority.URGENT, completed: false } });
+    const highCount = await this.taskRepository.count({ where: { userId, priority: TaskPriority.HIGH, completed: false } });
     
     const categoriesResult = await this.taskRepository
       .createQueryBuilder('task')
       .select('task.category', 'category')
       .addSelect('COUNT(task.id)', 'count')
+      .where('task.userId = :userId', { userId })
       .groupBy('task.category')
       .getRawMany();
 

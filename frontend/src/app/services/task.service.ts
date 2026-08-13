@@ -1,6 +1,7 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Task, TaskFilter, TaskStats, CreateTaskInput, UpdateTaskInput } from '../models/task.model';
+import { AuthService } from './auth.service';
 import { Observable, catchError, tap, of } from 'rxjs';
 
 @Injectable({
@@ -8,6 +9,7 @@ import { Observable, catchError, tap, of } from 'rxjs';
 })
 export class TaskService {
   private http = inject(HttpClient);
+  private authService = inject(AuthService);
   private apiUrl = 'http://localhost:3000/api/tasks';
 
   // Signals State
@@ -36,11 +38,21 @@ export class TaskService {
   });
 
   constructor() {
-    this.loadTasks();
-    this.loadStats();
+    effect(() => {
+      const user = this.authService.currentUser();
+      if (user) {
+        this.loadTasks();
+        this.loadStats();
+      } else {
+        this.tasks.set([]);
+        this.stats.set(null);
+      }
+    });
   }
 
   loadTasks() {
+    if (!this.authService.isAuthenticated()) return;
+
     this.loading.set(true);
     this.error.set(null);
 
@@ -67,13 +79,15 @@ export class TaskService {
       },
       error: (err) => {
         console.error('Failed to fetch tasks', err);
-        this.error.set('Could not connect to NestJS backend. Ensure backend is running.');
+        this.error.set('Could not connect to NestJS backend. Ensure backend is running and you are logged in.');
         this.loading.set(false);
       },
     });
   }
 
   loadStats() {
+    if (!this.authService.isAuthenticated()) return;
+
     this.http.get<TaskStats>(`${this.apiUrl}/stats`).subscribe({
       next: (data) => this.stats.set(data),
       error: (err) => console.error('Failed to fetch stats', err),
@@ -102,7 +116,6 @@ export class TaskService {
   }
 
   updateTask(id: string, updates: UpdateTaskInput) {
-    // Optimistic UI update
     this.tasks.update((prev) =>
       prev.map((t) => (t.id === id ? { ...t, ...updates } : t)),
     );
@@ -115,7 +128,7 @@ export class TaskService {
         this.loadStats();
       }),
       catchError((err) => {
-        this.loadTasks(); // revert on error
+        this.loadTasks();
         throw err;
       }),
     );
@@ -126,14 +139,13 @@ export class TaskService {
   }
 
   deleteTask(id: string) {
-    // Optimistic removal
     const previousTasks = this.tasks();
     this.tasks.update((prev) => prev.filter((t) => t.id !== id));
 
     return this.http.delete(`${this.apiUrl}/${id}`).pipe(
       tap(() => this.loadStats()),
       catchError((err) => {
-        this.tasks.set(previousTasks); // revert
+        this.tasks.set(previousTasks);
         throw err;
       }),
     ).subscribe();
