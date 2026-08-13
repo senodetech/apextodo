@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { Task, TaskPriority } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -28,7 +28,7 @@ export class TasksService implements OnModuleInit {
       provider: 'google',
     });
 
-    const unassignedTasks = await this.taskRepository.find({ where: { userId: undefined } });
+    const unassignedTasks = await this.taskRepository.find({ where: { userId: IsNull() } });
     if (unassignedTasks.length > 0) {
       for (const t of unassignedTasks) {
         t.userId = defaultUser.id;
