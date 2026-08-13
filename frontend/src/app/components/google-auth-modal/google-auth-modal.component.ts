@@ -34,16 +34,19 @@ import { AuthService } from '../../services/auth.service';
 
           <form (ngSubmit)="onConfirmLogin()">
             <div class="form-group">
-              <label class="form-label">Google Account Email</label>
+              <label class="form-label">Enter Google Account Email</label>
               <input
                 type="email"
                 class="form-input"
-                placeholder="you&#64;gmail.com"
+                placeholder="name&#64;gmail.com"
                 [(ngModel)]="email"
                 name="email"
                 required
                 autocomplete="email"
               />
+              <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                Type any Google or Gmail address to authenticate your workspace.
+              </span>
             </div>
 
             <div class="modal-actions">
