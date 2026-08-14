@@ -33,7 +33,7 @@ export class TaskService {
 
   // Mode & Scope Signals
   dashboardMode = signal<'admin' | 'personal'>('admin');
-  memberScope = signal<'all' | 'assigned' | 'created'>('all');
+  memberScope = signal<'assigned' | 'delegated' | 'created' | 'all'>('assigned');
 
   filter = signal<TaskFilter>({
     completed: 'all',
@@ -147,7 +147,7 @@ export class TaskService {
     this.loadStats();
   }
 
-  setMemberScope(scope: 'all' | 'assigned' | 'created') {
+  setMemberScope(scope: 'assigned' | 'delegated' | 'created' | 'all') {
     this.memberScope.set(scope);
     this.page.set(1);
     this.loadTasks();

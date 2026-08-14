@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Output, inject } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { TaskService } from '../../../services/task.service';
 import { Task } from '../../../models/task.model';
 import { FormsModule } from '@angular/forms';
@@ -19,15 +19,7 @@ import { KanbanBoardComponent } from '../../kanban-board/kanban-board.component'
     <div class="member-dashboard">
       <!-- Personal Key Metrics Cards -->
       <section class="personal-stats-grid">
-        <div class="stat-card glass-card">
-          <div class="stat-icon-bg icon-total">📋</div>
-          <div class="stat-info">
-            <span class="stat-label">My Total Tasks</span>
-            <span class="stat-value">{{ taskService.stats()?.total || 0 }}</span>
-          </div>
-        </div>
-
-        <div class="stat-card glass-card">
+        <div class="stat-card glass-card highlight-assigned" [class.active-card]="taskService.memberScope() === 'assigned'" (click)="onScopeChange('assigned')">
           <div class="stat-icon-bg icon-assigned">📥</div>
           <div class="stat-info">
             <span class="stat-label">Assigned to Me</span>
@@ -35,10 +27,18 @@ import { KanbanBoardComponent } from '../../kanban-board/kanban-board.component'
           </div>
         </div>
 
-        <div class="stat-card glass-card">
+        <div class="stat-card glass-card" [class.active-card]="taskService.memberScope() === 'delegated'" (click)="onScopeChange('delegated')">
+          <div class="stat-icon-bg icon-delegated">📤</div>
+          <div class="stat-info">
+            <span class="stat-label">Tasks I Assigned</span>
+            <span class="stat-value text-cyan">{{ taskService.stats()?.delegatedCount || 0 }}</span>
+          </div>
+        </div>
+
+        <div class="stat-card glass-card" [class.active-card]="taskService.memberScope() === 'created'" (click)="onScopeChange('created')">
           <div class="stat-icon-bg icon-created">✍️</div>
           <div class="stat-info">
-            <span class="stat-label">Created by Me</span>
+            <span class="stat-label">Created for Myself</span>
             <span class="stat-value text-purple">{{ taskService.stats()?.createdByMe || 0 }}</span>
           </div>
         </div>
@@ -62,28 +62,35 @@ import { KanbanBoardComponent } from '../../kanban-board/kanban-board.component'
 
       <!-- Scope Tabs & Toolbar -->
       <section class="toolbar-wrapper glass-card">
-        <!-- Scope Tabs: All vs Assigned vs Created -->
+        <!-- Separate Scope Tabs: Assigned to Me vs Tasks I Assigned vs Created for Self vs All -->
         <div class="scope-tabs">
-          <button
-            class="tab-btn"
-            [class.active]="taskService.memberScope() === 'all'"
-            (click)="onScopeChange('all')"
-          >
-            All Workspace Tasks
-          </button>
           <button
             class="tab-btn"
             [class.active]="taskService.memberScope() === 'assigned'"
             (click)="onScopeChange('assigned')"
           >
-            📥 Assigned to Me
+            📥 Tasks Assigned to Me ({{ taskService.stats()?.assignedToMe || 0 }})
+          </button>
+          <button
+            class="tab-btn"
+            [class.active]="taskService.memberScope() === 'delegated'"
+            (click)="onScopeChange('delegated')"
+          >
+            📤 Tasks I Assigned to Others ({{ taskService.stats()?.delegatedCount || 0 }})
           </button>
           <button
             class="tab-btn"
             [class.active]="taskService.memberScope() === 'created'"
             (click)="onScopeChange('created')"
           >
-            ✍️ Created by Me
+            ✍️ My Personal Created Tasks ({{ taskService.stats()?.createdByMe || 0 }})
+          </button>
+          <button
+            class="tab-btn"
+            [class.active]="taskService.memberScope() === 'all'"
+            (click)="onScopeChange('all')"
+          >
+            📋 All My Workspace Tasks ({{ taskService.stats()?.total || 0 }})
           </button>
         </div>
 
@@ -93,7 +100,7 @@ import { KanbanBoardComponent } from '../../kanban-board/kanban-board.component'
             <span>🔍</span>
             <input
               type="text"
-              placeholder="Filter tasks..."
+              placeholder="Search tasks..."
               [ngModel]="taskService.filter().search"
               (ngModelChange)="onSearchChange($event)"
             />
@@ -218,6 +225,16 @@ import { KanbanBoardComponent } from '../../kanban-board/kanban-board.component'
       display: flex;
       align-items: center;
       gap: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+    .stat-card.active-card {
+      border-color: rgba(59, 130, 246, 0.4);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(20, 26, 46, 0.8) 100%);
     }
     .stat-icon-bg {
       width: 44px;
@@ -228,13 +245,13 @@ import { KanbanBoardComponent } from '../../kanban-board/kanban-board.component'
       justify-content: center;
       font-size: 20px;
     }
-    .icon-total {
-      background: rgba(99, 102, 241, 0.15);
-      border: 1px solid rgba(99, 102, 241, 0.3);
-    }
     .icon-assigned {
       background: rgba(59, 130, 246, 0.15);
       border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .icon-delegated {
+      background: rgba(14, 165, 233, 0.15);
+      border: 1px solid rgba(14, 165, 233, 0.3);
     }
     .icon-created {
       background: rgba(168, 85, 247, 0.15);
@@ -265,6 +282,7 @@ import { KanbanBoardComponent } from '../../kanban-board/kanban-board.component'
       color: #f8fafc;
     }
     .text-blue { color: #60a5fa; }
+    .text-cyan { color: #38bdf8; }
     .text-purple { color: #c084fc; }
     .text-green { color: #34d399; }
     .text-amber { color: #fbbf24; }
@@ -443,7 +461,7 @@ export class MemberDashboardComponent {
   taskService = inject(TaskService);
   currentView: 'list' | 'kanban' = 'list';
 
-  onScopeChange(scope: 'all' | 'assigned' | 'created') {
+  onScopeChange(scope: 'assigned' | 'delegated' | 'created' | 'all') {
     this.taskService.setMemberScope(scope);
   }
 

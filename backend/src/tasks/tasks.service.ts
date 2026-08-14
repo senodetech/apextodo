@@ -22,7 +22,7 @@ export interface TaskQueryFilter {
   page?: number;
   limit?: number;
   mode?: 'admin' | 'personal';
-  scope?: 'all' | 'assigned' | 'created';
+  scope?: 'all' | 'assigned' | 'delegated' | 'created';
 }
 
 @Injectable()
@@ -108,10 +108,22 @@ export class TasksService implements OnModuleInit {
 
     if (isPersonalMode) {
       if (filter.scope === 'assigned') {
+        // Tasks assigned specifically to this user
         query.andWhere('task.assignedToId = :userId', { userId: user.id });
+      } else if (filter.scope === 'delegated') {
+        // Tasks created by this user and assigned to other team members
+        query.andWhere(
+          'task.userId = :userId AND task.assignedToId IS NOT NULL AND task.assignedToId != :userId',
+          { userId: user.id },
+        );
       } else if (filter.scope === 'created') {
-        query.andWhere('task.userId = :userId', { userId: user.id });
+        // Tasks created by this user for themselves
+        query.andWhere(
+          'task.userId = :userId AND (task.assignedToId IS NULL OR task.assignedToId = :userId)',
+          { userId: user.id },
+        );
       } else {
+        // All tasks for this user (assigned to me or created by me)
         query.andWhere(
           '(task.userId = :userId OR task.assignedToId = :userId OR (task.userId IS NULL AND task.assignedToId IS NULL))',
           { userId: user.id },
@@ -443,9 +455,22 @@ export class TasksService implements OnModuleInit {
       .where('task.assignedToId = :userId', { userId: user.id })
       .getCount();
 
+    // Tasks I assigned / delegated to others
+    const delegatedCount = await this.taskRepository
+      .createQueryBuilder('task')
+      .where(
+        'task.userId = :userId AND task.assignedToId IS NOT NULL AND task.assignedToId != :userId',
+        { userId: user.id },
+      )
+      .getCount();
+
+    // Tasks created by me for myself
     const createdByMe = await this.taskRepository
       .createQueryBuilder('task')
-      .where('task.userId = :userId', { userId: user.id })
+      .where(
+        'task.userId = :userId AND (task.assignedToId IS NULL OR task.assignedToId = :userId)',
+        { userId: user.id },
+      )
       .getCount();
 
     const completed = await this.taskRepository
@@ -491,6 +516,7 @@ export class TasksService implements OnModuleInit {
     return {
       total,
       assignedToMe,
+      delegatedCount,
       createdByMe,
       completed,
       pending,
