@@ -2,12 +2,14 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Task, TaskFilter, TaskStats, CreateTaskInput, UpdateTaskInput } from '../models/task.model';
 import { Observable, catchError, tap, of } from 'rxjs';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TaskService {
   private http = inject(HttpClient);
+  private authService = inject(AuthService);
   private apiUrl = 'http://localhost:3000/api/tasks';
 
   // Signals State
@@ -28,7 +30,7 @@ export class TaskService {
   completedCount = computed(() => this.tasks().filter((t) => t.completed).length);
 
   categories = computed(() => {
-    const set = new Set<string>(['General', 'Work', 'Personal', 'Shopping', 'Health']);
+    const set = new Set<string>(['General', 'Work', 'Personal', 'Shopping', 'Health', 'Database', 'Frontend', 'Backend', 'Docs']);
     this.tasks().forEach((t) => {
       if (t.category) set.add(t.category);
     });
@@ -36,11 +38,15 @@ export class TaskService {
   });
 
   constructor() {
-    this.loadTasks();
-    this.loadStats();
+    if (this.authService.accessToken()) {
+      this.loadTasks();
+      this.loadStats();
+    }
   }
 
   loadTasks() {
+    if (!this.authService.accessToken()) return;
+
     this.loading.set(true);
     this.error.set(null);
 
@@ -66,6 +72,10 @@ export class TaskService {
         this.loading.set(false);
       },
       error: (err) => {
+        if (err.status === 401) {
+          this.authService.clearSession();
+          return;
+        }
         console.error('Failed to fetch tasks', err);
         this.error.set('Could not connect to NestJS backend. Ensure backend is running.');
         this.loading.set(false);
@@ -74,6 +84,8 @@ export class TaskService {
   }
 
   loadStats() {
+    if (!this.authService.accessToken()) return;
+
     this.http.get<TaskStats>(`${this.apiUrl}/stats`).subscribe({
       next: (data) => this.stats.set(data),
       error: (err) => console.error('Failed to fetch stats', err),

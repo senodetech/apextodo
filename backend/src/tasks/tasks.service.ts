@@ -1,9 +1,15 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, ILike } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Task, TaskPriority } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { User, UserRole } from '../users/entities/user.entity';
 
 export interface TaskQueryFilter {
   completed?: string;
@@ -31,35 +37,40 @@ export class TasksService implements OnModuleInit {
     const sampleTasks = [
       {
         title: 'Setup PostgreSQL & TypeORM Database',
-        description: 'Configure todo_db schema synchronization, connection pool, and TypeORM entity models.',
+        description:
+          'Configure todo_db schema synchronization, connection pool, and TypeORM entity models.',
         completed: true,
         priority: TaskPriority.URGENT,
         category: 'Database',
       },
       {
         title: 'Build Angular 19 Standalone Signals UI',
-        description: 'Implement reactive state management using Signal store, Glassmorphic theme tokens, and custom CSS.',
+        description:
+          'Implement reactive state management using Signal store, Glassmorphic theme tokens, and custom CSS.',
         completed: true,
         priority: TaskPriority.HIGH,
         category: 'Frontend',
       },
       {
         title: 'Deploy NestJS REST API Controller & DTOs',
-        description: 'Create CRUD endpoints, request payload validation pipes, and CORS integration middleware.',
+        description:
+          'Create CRUD endpoints, request payload validation pipes, and CORS integration middleware.',
         completed: false,
         priority: TaskPriority.HIGH,
         category: 'Backend',
       },
       {
         title: 'Implement Interactive Kanban Board View',
-        description: 'Enable dual-view layout switching between standard list view and column-based Kanban workspace.',
+        description:
+          'Enable dual-view layout switching between standard list view and column-based Kanban workspace.',
         completed: false,
         priority: TaskPriority.MEDIUM,
         category: 'Frontend',
       },
       {
         title: 'Write Technical Architecture README',
-        description: 'Draft senior engineering setup documentation, API specifications, and environment variable references.',
+        description:
+          'Draft senior engineering setup documentation, API specifications, and environment variable references.',
         completed: true,
         priority: TaskPriority.MEDIUM,
         category: 'Docs',
@@ -70,20 +81,36 @@ export class TasksService implements OnModuleInit {
     return this.taskRepository.save(tasks);
   }
 
-  async findAll(filter: TaskQueryFilter): Promise<Task[]> {
-    const query = this.taskRepository.createQueryBuilder('task');
+  async findAll(filter: TaskQueryFilter, user: User): Promise<Task[]> {
+    const query = this.taskRepository
+      .createQueryBuilder('task')
+      .leftJoinAndSelect('task.user', 'user');
+
+    // Role-based task scoping
+    const isAdmin =
+      user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN;
+    if (!isAdmin) {
+      query.andWhere('(task.userId = :userId OR task.userId IS NULL)', {
+        userId: user.id,
+      });
+    }
 
     if (filter.completed !== undefined && filter.completed !== 'all') {
-      const isCompleted = filter.completed === 'true' || filter.completed === 'completed';
+      const isCompleted =
+        filter.completed === 'true' || filter.completed === 'completed';
       query.andWhere('task.completed = :completed', { completed: isCompleted });
     }
 
     if (filter.priority && filter.priority !== 'all') {
-      query.andWhere('task.priority = :priority', { priority: filter.priority.toUpperCase() });
+      query.andWhere('task.priority = :priority', {
+        priority: filter.priority.toUpperCase(),
+      });
     }
 
     if (filter.category && filter.category !== 'all') {
-      query.andWhere('LOWER(task.category) = LOWER(:category)', { category: filter.category });
+      query.andWhere('LOWER(task.category) = LOWER(:category)', {
+        category: filter.category,
+      });
     }
 
     if (filter.search) {
@@ -97,17 +124,29 @@ export class TasksService implements OnModuleInit {
     return query.getMany();
   }
 
-  async findOne(id: string): Promise<Task> {
-    const task = await this.taskRepository.findOne({ where: { id } });
+  async findOne(id: string, user: User): Promise<Task> {
+    const task = await this.taskRepository.findOne({
+      where: { id },
+      relations: { user: true },
+    });
+
     if (!task) {
       throw new NotFoundException(`Task with ID "${id}" not found`);
     }
+
+    const isAdmin =
+      user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN;
+    if (!isAdmin && task.userId && task.userId !== user.id) {
+      throw new ForbiddenException('You do not have access to this task');
+    }
+
     return task;
   }
 
-  async create(createTaskDto: CreateTaskDto): Promise<Task> {
+  async create(createTaskDto: CreateTaskDto, user: User): Promise<Task> {
     const task = this.taskRepository.create({
       ...createTaskDto,
+      userId: user.id,
       priority: createTaskDto.priority || TaskPriority.MEDIUM,
       category: createTaskDto.category || 'General',
       dueDate: createTaskDto.dueDate ? new Date(createTaskDto.dueDate) : undefined,
@@ -115,9 +154,13 @@ export class TasksService implements OnModuleInit {
     return this.taskRepository.save(task);
   }
 
-  async update(id: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
-    const task = await this.findOne(id);
-    
+  async update(
+    id: string,
+    updateTaskDto: UpdateTaskDto,
+    user: User,
+  ): Promise<Task> {
+    const task = await this.findOne(id, user);
+
     if (updateTaskDto.dueDate !== undefined) {
       task.dueDate = updateTaskDto.dueDate ? new Date(updateTaskDto.dueDate) : undefined;
       delete updateTaskDto.dueDate;
@@ -127,31 +170,86 @@ export class TasksService implements OnModuleInit {
     return this.taskRepository.save(task);
   }
 
-  async remove(id: string): Promise<void> {
-    const result = await this.taskRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Task with ID "${id}" not found`);
-    }
+  async remove(id: string, user: User): Promise<void> {
+    const task = await this.findOne(id, user);
+    await this.taskRepository.delete(task.id);
   }
 
-  async clearCompleted(): Promise<{ count: number }> {
-    const result = await this.taskRepository.delete({ completed: true });
+  async clearCompleted(user: User): Promise<{ count: number }> {
+    const isAdmin =
+      user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN;
+
+    const query = this.taskRepository
+      .createQueryBuilder()
+      .delete()
+      .from(Task)
+      .where('completed = :completed', { completed: true });
+
+    if (!isAdmin) {
+      query.andWhere('(userId = :userId OR userId IS NULL)', { userId: user.id });
+    }
+
+    const result = await query.execute();
     return { count: result.affected || 0 };
   }
 
-  async getStats() {
-    const total = await this.taskRepository.count();
-    const completed = await this.taskRepository.count({ where: { completed: true } });
+  async getStats(user: User) {
+    const isAdmin =
+      user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN;
+
+    const baseQuery = this.taskRepository.createQueryBuilder('task');
+    if (!isAdmin) {
+      baseQuery.where('(task.userId = :userId OR task.userId IS NULL)', {
+        userId: user.id,
+      });
+    }
+
+    const total = await baseQuery.getCount();
+
+    const completedQuery = this.taskRepository
+      .createQueryBuilder('task')
+      .where('task.completed = :completed', { completed: true });
+    if (!isAdmin) {
+      completedQuery.andWhere('(task.userId = :userId OR task.userId IS NULL)', {
+        userId: user.id,
+      });
+    }
+    const completed = await completedQuery.getCount();
+
     const pending = total - completed;
-    const urgentCount = await this.taskRepository.count({ where: { priority: TaskPriority.URGENT, completed: false } });
-    const highCount = await this.taskRepository.count({ where: { priority: TaskPriority.HIGH, completed: false } });
-    
-    const categoriesResult = await this.taskRepository
+
+    const urgentQuery = this.taskRepository
+      .createQueryBuilder('task')
+      .where('task.priority = :priority', { priority: TaskPriority.URGENT })
+      .andWhere('task.completed = :completed', { completed: false });
+    if (!isAdmin) {
+      urgentQuery.andWhere('(task.userId = :userId OR task.userId IS NULL)', {
+        userId: user.id,
+      });
+    }
+    const urgentCount = await urgentQuery.getCount();
+
+    const highQuery = this.taskRepository
+      .createQueryBuilder('task')
+      .where('task.priority = :priority', { priority: TaskPriority.HIGH })
+      .andWhere('task.completed = :completed', { completed: false });
+    if (!isAdmin) {
+      highQuery.andWhere('(task.userId = :userId OR task.userId IS NULL)', {
+        userId: user.id,
+      });
+    }
+    const highCount = await highQuery.getCount();
+
+    const categoriesQuery = this.taskRepository
       .createQueryBuilder('task')
       .select('task.category', 'category')
-      .addSelect('COUNT(task.id)', 'count')
-      .groupBy('task.category')
-      .getRawMany();
+      .addSelect('COUNT(task.id)', 'count');
+    if (!isAdmin) {
+      categoriesQuery.where('(task.userId = :userId OR task.userId IS NULL)', {
+        userId: user.id,
+      });
+    }
+    const categoriesResult = await categoriesQuery.groupBy('task.category').getRawMany();
 
     const categories = categoriesResult.reduce((acc, curr) => {
       acc[curr.category] = parseInt(curr.count, 10);

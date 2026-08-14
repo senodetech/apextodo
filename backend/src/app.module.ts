@@ -2,7 +2,11 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TasksModule } from './tasks/tasks.module';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 import { Task } from './tasks/entities/task.entity';
+import { User } from './users/entities/user.entity';
+import { AuthLog } from './auth/entities/auth-log.entity';
 
 @Module({
   imports: [
@@ -22,9 +26,9 @@ import { Task } from './tasks/entities/task.entity';
             host: config.get<string>('DB_HOST', 'localhost'),
             port: config.get<number>('DB_PORT', 5432),
             username: config.get<string>('DB_USERNAME', 'postgres'),
-            password: config.get<string>('DB_PASSWORD', 'postgres'),
+            password: config.get<string>('DB_PASSWORD', 'root'),
             database: config.get<string>('DB_NAME', 'todo_db'),
-            entities: [Task],
+            entities: [Task, User, AuthLog],
             synchronize: true,
           };
         }
@@ -32,11 +36,13 @@ import { Task } from './tasks/entities/task.entity';
         return {
           type: 'better-sqlite3',
           database: 'todo.sqlite',
-          entities: [Task],
+          entities: [Task, User, AuthLog],
           synchronize: true,
         };
       },
     }),
+    AuthModule,
+    UsersModule,
     TasksModule,
   ],
 })

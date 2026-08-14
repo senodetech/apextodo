@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -14,29 +15,33 @@ import { TasksService } from './tasks.service';
 import type { TaskQueryFilter } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity';
 
 @Controller('api/tasks')
+@UseGuards(JwtAuthGuard)
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Get()
-  findAll(@Query() filter: TaskQueryFilter) {
-    return this.tasksService.findAll(filter);
+  findAll(@Query() filter: TaskQueryFilter, @CurrentUser() user: User) {
+    return this.tasksService.findAll(filter, user);
   }
 
   @Get('stats')
-  getStats() {
-    return this.tasksService.getStats();
+  getStats(@CurrentUser() user: User) {
+    return this.tasksService.getStats(user);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.tasksService.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.tasksService.findOne(id, user);
   }
 
   @Post()
-  create(@Body() createTaskDto: CreateTaskDto) {
-    return this.tasksService.create(createTaskDto);
+  create(@Body() createTaskDto: CreateTaskDto, @CurrentUser() user: User) {
+    return this.tasksService.create(createTaskDto, user);
   }
 
   @Post('seed')
@@ -45,19 +50,23 @@ export class TasksController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
-    return this.tasksService.update(id, updateTaskDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateTaskDto: UpdateTaskDto,
+    @CurrentUser() user: User,
+  ) {
+    return this.tasksService.update(id, updateTaskDto, user);
   }
 
   @Delete('completed/clear')
   @HttpCode(HttpStatus.OK)
-  clearCompleted() {
-    return this.tasksService.clearCompleted();
+  clearCompleted(@CurrentUser() user: User) {
+    return this.tasksService.clearCompleted(user);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string) {
-    return this.tasksService.remove(id);
+  remove(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.tasksService.remove(id, user);
   }
 }
