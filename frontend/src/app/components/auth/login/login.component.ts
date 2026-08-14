@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -88,6 +88,28 @@ import { LoginInput } from '../../../models/user.model';
                   {{ showPassword ? 'Hide' : 'Show' }}
                 </button>
               </div>
+            </div>
+
+            <!-- Remember Me & Security Row -->
+            <div class="form-options-row">
+              <label class="checkbox-label" for="remember-me-check">
+                <input
+                  id="remember-me-check"
+                  type="checkbox"
+                  class="custom-checkbox"
+                  [(ngModel)]="rememberMe"
+                  name="rememberMe"
+                />
+                <span>Remember me</span>
+              </label>
+
+              <span class="secure-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                Encrypted Session
+              </span>
             </div>
 
             <!-- Submit Button -->
@@ -227,11 +249,41 @@ import { LoginInput } from '../../../models/user.model';
     .btn-toggle-pw:hover {
       color: var(--text-primary);
     }
+    .form-options-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      padding: 2px 0;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+      color: #cbd5e1;
+    }
+    .custom-checkbox {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      accent-color: #3b82f6;
+      cursor: pointer;
+    }
+    .secure-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: #64748b;
+    }
     .btn-block {
       width: 100%;
       padding: 13px;
       font-size: 0.95rem;
-      margin-top: 8px;
+      margin-top: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -264,19 +316,36 @@ import { LoginInput } from '../../../models/user.model';
     }
   `]
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   authService = inject(AuthService);
   router = inject(Router);
 
+  private readonly REMEMBER_ME_KEY = 'apex_remember_me_email';
+
   showPassword = false;
+  rememberMe = false;
 
   formData: LoginInput = {
     email: '',
     password: '',
   };
 
+  ngOnInit() {
+    const savedEmail = localStorage.getItem(this.REMEMBER_ME_KEY);
+    if (savedEmail) {
+      this.formData.email = savedEmail;
+      this.rememberMe = true;
+    }
+  }
+
   onSubmit() {
     if (!this.formData.email.trim() || !this.formData.password) return;
+
+    if (this.rememberMe) {
+      localStorage.setItem(this.REMEMBER_ME_KEY, this.formData.email.trim());
+    } else {
+      localStorage.removeItem(this.REMEMBER_ME_KEY);
+    }
 
     this.authService.login(this.formData).subscribe({
       next: () => this.router.navigate(['/dashboard']),
