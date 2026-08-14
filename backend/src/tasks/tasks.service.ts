@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
   OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,12 +11,18 @@ import { Task, TaskPriority } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { User, UserRole } from '../users/entities/user.entity';
+import { AuthLog } from '../auth/entities/auth-log.entity';
 
 export interface TaskQueryFilter {
   completed?: string;
   priority?: string;
   category?: string;
   search?: string;
+  assignedToId?: string;
+  page?: number;
+  limit?: number;
+  mode?: 'admin' | 'personal';
+  scope?: 'all' | 'assigned' | 'created';
 }
 
 @Injectable()
@@ -23,6 +30,10 @@ export class TasksService implements OnModuleInit {
   constructor(
     @InjectRepository(Task)
     private readonly taskRepository: Repository<Task>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(AuthLog)
+    private readonly authLogRepository: Repository<AuthLog>,
   ) {}
 
   async onModuleInit() {
@@ -81,18 +92,38 @@ export class TasksService implements OnModuleInit {
     return this.taskRepository.save(tasks);
   }
 
-  async findAll(filter: TaskQueryFilter, user: User): Promise<Task[]> {
+  async findAll(filter: TaskQueryFilter, user: User) {
+    const page = Number(filter.page) || 1;
+    const limit = Number(filter.limit) || 20;
+    const skip = (page - 1) * limit;
+
     const query = this.taskRepository
       .createQueryBuilder('task')
-      .leftJoinAndSelect('task.user', 'user');
+      .leftJoinAndSelect('task.user', 'creator')
+      .leftJoinAndSelect('task.assignedTo', 'assignee');
 
-    // Role-based task scoping
     const isAdmin =
       user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN;
-    if (!isAdmin) {
-      query.andWhere('(task.userId = :userId OR task.userId IS NULL)', {
-        userId: user.id,
-      });
+    const isPersonalMode = filter.mode === 'personal' || !isAdmin;
+
+    if (isPersonalMode) {
+      if (filter.scope === 'assigned') {
+        query.andWhere('task.assignedToId = :userId', { userId: user.id });
+      } else if (filter.scope === 'created') {
+        query.andWhere('task.userId = :userId', { userId: user.id });
+      } else {
+        query.andWhere(
+          '(task.userId = :userId OR task.assignedToId = :userId OR (task.userId IS NULL AND task.assignedToId IS NULL))',
+          { userId: user.id },
+        );
+      }
+    } else {
+      // Admin Executive Overview: Can optionally filter by specific assignee
+      if (filter.assignedToId) {
+        query.andWhere('task.assignedToId = :assignedToId', {
+          assignedToId: filter.assignedToId,
+        });
+      }
     }
 
     if (filter.completed !== undefined && filter.completed !== 'all') {
@@ -121,13 +152,26 @@ export class TasksService implements OnModuleInit {
     }
 
     query.orderBy('task.createdAt', 'DESC');
-    return query.getMany();
+    query.skip(skip).take(limit);
+
+    const [data, total] = await query.getManyAndCount();
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    };
   }
 
   async findOne(id: string, user: User): Promise<Task> {
     const task = await this.taskRepository.findOne({
       where: { id },
-      relations: { user: true },
+      relations: {
+        user: true,
+        assignedTo: true,
+      },
     });
 
     if (!task) {
@@ -136,7 +180,12 @@ export class TasksService implements OnModuleInit {
 
     const isAdmin =
       user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN;
-    if (!isAdmin && task.userId && task.userId !== user.id) {
+    if (
+      !isAdmin &&
+      task.userId &&
+      task.userId !== user.id &&
+      task.assignedToId !== user.id
+    ) {
       throw new ForbiddenException('You do not have access to this task');
     }
 
@@ -144,14 +193,48 @@ export class TasksService implements OnModuleInit {
   }
 
   async create(createTaskDto: CreateTaskDto, user: User): Promise<Task> {
+    let assignedToId: string | null = null;
+
+    if (createTaskDto.assignedToId) {
+      const targetUser = await this.userRepository.findOne({
+        where: { id: createTaskDto.assignedToId },
+      });
+
+      if (!targetUser) {
+        throw new NotFoundException('Assignee user not found');
+      }
+
+      if (user.role === UserRole.SUPER_ADMIN) {
+        // Super Admin can assign to anyone
+        assignedToId = targetUser.id;
+      } else if (user.role === UserRole.ADMIN) {
+        // Admin can only assign to Members or self
+        if (targetUser.role === UserRole.SUPER_ADMIN || (targetUser.role === UserRole.ADMIN && targetUser.id !== user.id)) {
+          throw new ForbiddenException('Admins can only assign tasks to Members or to themselves');
+        }
+        assignedToId = targetUser.id;
+      } else {
+        // Standard user always assigns to self
+        assignedToId = user.id;
+      }
+    } else {
+      // Default: if regular user, assign to self
+      if (user.role === UserRole.USER) {
+        assignedToId = user.id;
+      }
+    }
+
     const task = this.taskRepository.create({
       ...createTaskDto,
       userId: user.id,
+      assignedToId,
       priority: createTaskDto.priority || TaskPriority.MEDIUM,
       category: createTaskDto.category || 'General',
       dueDate: createTaskDto.dueDate ? new Date(createTaskDto.dueDate) : undefined,
     });
-    return this.taskRepository.save(task);
+
+    const saved = await this.taskRepository.save(task);
+    return this.findOne(saved.id, user);
   }
 
   async update(
@@ -161,17 +244,49 @@ export class TasksService implements OnModuleInit {
   ): Promise<Task> {
     const task = await this.findOne(id, user);
 
+    const isAdmin =
+      user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN;
+
+    if (updateTaskDto.assignedToId !== undefined) {
+      if (!isAdmin) {
+        throw new ForbiddenException('Only Admins can reassign tasks');
+      }
+
+      if (updateTaskDto.assignedToId) {
+        const targetUser = await this.userRepository.findOne({
+          where: { id: updateTaskDto.assignedToId },
+        });
+        if (!targetUser) throw new NotFoundException('Assignee not found');
+
+        if (user.role === UserRole.ADMIN && targetUser.role !== UserRole.USER && targetUser.id !== user.id) {
+          throw new ForbiddenException('Admins can only assign tasks to Members or themselves');
+        }
+        task.assignedToId = targetUser.id;
+      } else {
+        task.assignedToId = null;
+      }
+      delete updateTaskDto.assignedToId;
+    }
+
     if (updateTaskDto.dueDate !== undefined) {
       task.dueDate = updateTaskDto.dueDate ? new Date(updateTaskDto.dueDate) : undefined;
       delete updateTaskDto.dueDate;
     }
 
     Object.assign(task, updateTaskDto);
-    return this.taskRepository.save(task);
+    await this.taskRepository.save(task);
+    return this.findOne(id, user);
   }
 
   async remove(id: string, user: User): Promise<void> {
     const task = await this.findOne(id, user);
+    const isAdmin =
+      user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN;
+
+    if (!isAdmin && task.userId !== user.id) {
+      throw new ForbiddenException('You can only delete tasks you created');
+    }
+
     await this.taskRepository.delete(task.id);
   }
 
@@ -186,70 +301,133 @@ export class TasksService implements OnModuleInit {
       .where('completed = :completed', { completed: true });
 
     if (!isAdmin) {
-      query.andWhere('(userId = :userId OR userId IS NULL)', { userId: user.id });
+      query.andWhere(
+        '(userId = :userId OR assignedToId = :userId OR (userId IS NULL AND assignedToId IS NULL))',
+        { userId: user.id },
+      );
     }
 
     const result = await query.execute();
     return { count: result.affected || 0 };
   }
 
-  async getStats(user: User) {
+  async getStats(user: User, mode: 'admin' | 'personal' = 'admin') {
     const isAdmin =
       user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN;
+    const isExecutiveAdmin = isAdmin && mode === 'admin';
 
-    const baseQuery = this.taskRepository.createQueryBuilder('task');
-    if (!isAdmin) {
-      baseQuery.where('(task.userId = :userId OR task.userId IS NULL)', {
-        userId: user.id,
+    if (isExecutiveAdmin) {
+      // 6 Comprehensive Executive Widgets for Admin
+      const total = await this.taskRepository.count();
+      const completed = await this.taskRepository.count({ where: { completed: true } });
+      const pending = total - completed;
+
+      const urgentHighCount = await this.taskRepository
+        .createQueryBuilder('task')
+        .where('task.completed = :completed', { completed: false })
+        .andWhere('(task.priority = :urgent OR task.priority = :high)', {
+          urgent: TaskPriority.URGENT,
+          high: TaskPriority.HIGH,
+        })
+        .getCount();
+
+      const totalUsersCount = await this.userRepository.count();
+      const adminsCount = await this.userRepository.count({
+        where: [{ role: UserRole.ADMIN }, { role: UserRole.SUPER_ADMIN }],
       });
+      const membersCount = totalUsersCount - adminsCount;
+
+      const assignedCount = await this.taskRepository
+        .createQueryBuilder('task')
+        .where('task.assignedToId IS NOT NULL')
+        .getCount();
+      const unassignedCount = total - assignedCount;
+
+      const securityLogsCount = await this.authLogRepository.count();
+
+      const categoriesResult = await this.taskRepository
+        .createQueryBuilder('task')
+        .select('task.category', 'category')
+        .addSelect('COUNT(task.id)', 'count')
+        .groupBy('task.category')
+        .getRawMany();
+
+      const categories = categoriesResult.reduce((acc, curr) => {
+        acc[curr.category] = parseInt(curr.count, 10);
+        return acc;
+      }, {});
+
+      return {
+        total,
+        completed,
+        pending,
+        urgentHighCount,
+        completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
+        activeUsersCount: totalUsersCount,
+        adminsCount,
+        membersCount,
+        assignedCount,
+        unassignedCount,
+        securityLogsCount,
+        categories,
+        isExecutive: true,
+      };
     }
 
-    const total = await baseQuery.getCount();
-
-    const completedQuery = this.taskRepository
+    // Member Personal Stats (or Admin Personal Workspace)
+    const personalBase = this.taskRepository
       .createQueryBuilder('task')
-      .where('task.completed = :completed', { completed: true });
-    if (!isAdmin) {
-      completedQuery.andWhere('(task.userId = :userId OR task.userId IS NULL)', {
-        userId: user.id,
-      });
-    }
-    const completed = await completedQuery.getCount();
+      .where(
+        '(task.userId = :userId OR task.assignedToId = :userId OR (task.userId IS NULL AND task.assignedToId IS NULL))',
+        { userId: user.id },
+      );
+
+    const total = await personalBase.getCount();
+
+    const assignedToMe = await this.taskRepository
+      .createQueryBuilder('task')
+      .where('task.assignedToId = :userId', { userId: user.id })
+      .getCount();
+
+    const createdByMe = await this.taskRepository
+      .createQueryBuilder('task')
+      .where('task.userId = :userId', { userId: user.id })
+      .getCount();
+
+    const completed = await this.taskRepository
+      .createQueryBuilder('task')
+      .where('task.completed = :completed', { completed: true })
+      .andWhere(
+        '(task.userId = :userId OR task.assignedToId = :userId OR (task.userId IS NULL AND task.assignedToId IS NULL))',
+        { userId: user.id },
+      )
+      .getCount();
 
     const pending = total - completed;
 
-    const urgentQuery = this.taskRepository
+    const urgentHighCount = await this.taskRepository
       .createQueryBuilder('task')
-      .where('task.priority = :priority', { priority: TaskPriority.URGENT })
-      .andWhere('task.completed = :completed', { completed: false });
-    if (!isAdmin) {
-      urgentQuery.andWhere('(task.userId = :userId OR task.userId IS NULL)', {
-        userId: user.id,
-      });
-    }
-    const urgentCount = await urgentQuery.getCount();
+      .where('task.completed = :completed', { completed: false })
+      .andWhere('(task.priority = :urgent OR task.priority = :high)', {
+        urgent: TaskPriority.URGENT,
+        high: TaskPriority.HIGH,
+      })
+      .andWhere(
+        '(task.userId = :userId OR task.assignedToId = :userId OR (task.userId IS NULL AND task.assignedToId IS NULL))',
+        { userId: user.id },
+      )
+      .getCount();
 
-    const highQuery = this.taskRepository
-      .createQueryBuilder('task')
-      .where('task.priority = :priority', { priority: TaskPriority.HIGH })
-      .andWhere('task.completed = :completed', { completed: false });
-    if (!isAdmin) {
-      highQuery.andWhere('(task.userId = :userId OR task.userId IS NULL)', {
-        userId: user.id,
-      });
-    }
-    const highCount = await highQuery.getCount();
-
-    const categoriesQuery = this.taskRepository
+    const categoriesResult = await this.taskRepository
       .createQueryBuilder('task')
       .select('task.category', 'category')
-      .addSelect('COUNT(task.id)', 'count');
-    if (!isAdmin) {
-      categoriesQuery.where('(task.userId = :userId OR task.userId IS NULL)', {
-        userId: user.id,
-      });
-    }
-    const categoriesResult = await categoriesQuery.groupBy('task.category').getRawMany();
+      .addSelect('COUNT(task.id)', 'count')
+      .where(
+        '(task.userId = :userId OR task.assignedToId = :userId OR (task.userId IS NULL AND task.assignedToId IS NULL))',
+        { userId: user.id },
+      )
+      .groupBy('task.category')
+      .getRawMany();
 
     const categories = categoriesResult.reduce((acc, curr) => {
       acc[curr.category] = parseInt(curr.count, 10);
@@ -258,12 +436,14 @@ export class TasksService implements OnModuleInit {
 
     return {
       total,
+      assignedToMe,
+      createdByMe,
       completed,
       pending,
-      urgentCount,
-      highCount,
+      urgentHighCount,
       completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
       categories,
+      isExecutive: false,
     };
   }
 }

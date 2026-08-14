@@ -30,8 +30,11 @@ export class TasksController {
   }
 
   @Get('stats')
-  getStats(@CurrentUser() user: User) {
-    return this.tasksService.getStats(user);
+  getStats(
+    @CurrentUser() user: User,
+    @Query('mode') mode?: 'admin' | 'personal',
+  ) {
+    return this.tasksService.getStats(user, mode || 'admin');
   }
 
   @Get(':id')

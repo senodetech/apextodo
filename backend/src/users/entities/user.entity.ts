@@ -45,6 +45,9 @@ export class User {
   @OneToMany(() => Task, (task) => task.user)
   tasks: Task[];
 
+  @OneToMany(() => Task, (task) => task.assignedTo)
+  assignedTasks: Task[];
+
   @OneToMany(() => AuthLog, (log) => log.user)
   authLogs: AuthLog[];
 

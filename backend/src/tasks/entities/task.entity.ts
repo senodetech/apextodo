@@ -53,6 +53,16 @@ export class Task {
   @JoinColumn({ name: 'userId' })
   user?: User | null;
 
+  @Column({ type: 'uuid', nullable: true })
+  assignedToId?: string | null;
+
+  @ManyToOne(() => User, (user) => user.assignedTasks, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
+  @JoinColumn({ name: 'assignedToId' })
+  assignedTo?: User | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

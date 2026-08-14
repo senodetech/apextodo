@@ -32,6 +32,11 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @Get('assignable')
+  getAssignableUsers(@CurrentUser() user: User) {
+    return this.usersService.getAssignableUsers(user);
+  }
+
   @Post()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   createUser(
@@ -54,7 +59,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteUser(
     @Param('id') id: string,

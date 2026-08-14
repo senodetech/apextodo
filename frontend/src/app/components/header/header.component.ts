@@ -1,6 +1,8 @@
 import { Component, EventEmitter, Output, inject } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { TaskService } from '../../services/task.service';
+import { NotificationService } from '../../services/notification.service';
 import { UserRole } from '../../models/user.model';
 
 @Component({
@@ -22,8 +24,42 @@ import { UserRole } from '../../models/user.model';
         </div>
       </div>
 
+      <!-- Center: Workspace Mode Switcher (Visible to Admins / Super Admins) -->
+      <div class="workspace-switcher" *ngIf="authService.isAdmin()">
+        <button
+          class="switch-btn"
+          [class.active]="taskService.dashboardMode() === 'admin'"
+          (click)="taskService.setDashboardMode('admin')"
+        >
+          <span>🏢</span> Executive Dashboard
+        </button>
+        <button
+          class="switch-btn"
+          [class.active]="taskService.dashboardMode() === 'personal'"
+          (click)="taskService.setDashboardMode('personal')"
+        >
+          <span>👤</span> My Personal Tasks
+        </button>
+      </div>
+
       <div class="header-right">
-        <!-- Admin Management Trigger -->
+        <!-- Super Admin Notifications Bell -->
+        <button
+          *ngIf="authService.isSuperAdmin()"
+          class="btn-bell"
+          (click)="openNotificationsModal.emit()"
+          title="Super Admin Activity Alerts"
+        >
+          <span class="bell-icon">🔔</span>
+          <span
+            *ngIf="notificationService.unreadCount() > 0"
+            class="badge-notification"
+          >
+            {{ notificationService.unreadCount() }}
+          </span>
+        </button>
+
+        <!-- Admin: Team & Users Management Trigger -->
         <button
           *ngIf="authService.isAdmin()"
           class="btn-nav"
@@ -39,7 +75,7 @@ import { UserRole } from '../../models/user.model';
           <span>Team & Users</span>
         </button>
 
-        <!-- Audit Logs Trigger -->
+        <!-- Admin: Audit Logs Trigger -->
         <button
           *ngIf="authService.isAdmin()"
           class="btn-nav"
@@ -52,16 +88,7 @@ import { UserRole } from '../../models/user.model';
           <span>Audit Logs</span>
         </button>
 
-        <!-- New Task Button -->
-        <button class="btn btn-primary" (click)="openCreateModal.emit()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          <span>New Task</span>
-        </button>
-
-        <!-- User Profile Dropdown / Card -->
+        <!-- User Profile Avatar & Role Badge -->
         <div class="user-profile-widget">
           <div
             class="user-avatar"
@@ -132,10 +159,82 @@ import { UserRole } from '../../models/user.model';
       color: var(--text-muted);
       margin: 0;
     }
+    .workspace-switcher {
+      display: flex;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+    }
+    .switch-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .switch-btn:hover {
+      color: #f1f5f9;
+    }
+    .switch-btn.active {
+      background: #3b82f6;
+      color: white;
+      box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4);
+    }
     .header-right {
       display: flex;
       align-items: center;
       gap: 12px;
+    }
+    .btn-bell {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .btn-bell:hover {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: rgba(245, 158, 11, 0.4);
+    }
+    .bell-icon {
+      font-size: 18px;
+    }
+    .badge-notification {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: #ef4444;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 800;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
     }
     .btn-nav {
       display: flex;
@@ -220,7 +319,7 @@ import { UserRole } from '../../models/user.model';
       color: #fb7185;
       background: rgba(244, 63, 94, 0.15);
     }
-    @media (max-width: 860px) {
+    @media (max-width: 900px) {
       .app-header { flex-direction: column; align-items: stretch; gap: 14px; }
       .header-right { flex-wrap: wrap; justify-content: space-between; }
     }
@@ -230,8 +329,11 @@ export class HeaderComponent {
   @Output() openCreateModal = new EventEmitter<void>();
   @Output() openUserManagementModal = new EventEmitter<void>();
   @Output() openAuditLogsModal = new EventEmitter<void>();
+  @Output() openNotificationsModal = new EventEmitter<void>();
 
   authService = inject(AuthService);
+  taskService = inject(TaskService);
+  notificationService = inject(NotificationService);
 
   getInitials(name?: string): string {
     if (!name) return 'U';

@@ -36,6 +36,11 @@ import { User, UserRole, CreateUserInput } from '../../../models/user.model';
           </button>
         </div>
 
+        <!-- Role Authority Notice for Admins -->
+        <div *ngIf="!authService.isSuperAdmin()" class="admin-notice-banner">
+          <span>ℹ️ As an Admin, you can provision and manage standard Member accounts. Actions will notify the Super Admin.</span>
+        </div>
+
         <!-- Tabs -->
         <div class="admin-tabs">
           <button
@@ -77,7 +82,7 @@ import { User, UserRole, CreateUserInput } from '../../../models/user.model';
                   <th>Role</th>
                   <th>Tasks</th>
                   <th>Joined Date</th>
-                  <th *ngIf="authService.isSuperAdmin()">Actions</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -104,18 +109,21 @@ import { User, UserRole, CreateUserInput } from '../../../models/user.model';
                   <td class="date-cell">
                     {{ user.createdAt | date:'mediumDate' }}
                   </td>
-                  <td *ngIf="authService.isSuperAdmin()">
+                  <td>
                     <div class="actions-cell">
+                      <!-- Promote/Demote: Exclusive to Super Admin -->
                       <button
-                        *ngIf="user.id !== authService.currentUser()?.id"
+                        *ngIf="authService.isSuperAdmin() && user.role !== 'SUPER_ADMIN'"
                         class="btn-sm btn-action"
                         (click)="toggleRole(user)"
                         [title]="user.role === 'ADMIN' ? 'Demote to Member' : 'Promote to Admin'"
                       >
                         {{ user.role === 'ADMIN' ? 'Demote' : 'Promote' }}
                       </button>
+
+                      <!-- Delete: Super Admin can delete anyone except self; Admin can delete Members only -->
                       <button
-                        *ngIf="user.id !== authService.currentUser()?.id"
+                        *ngIf="canDelete(user)"
                         class="btn-icon text-danger"
                         (click)="deleteUser(user)"
                         title="Remove user"
@@ -181,7 +189,7 @@ import { User, UserRole, CreateUserInput } from '../../../models/user.model';
                   name="role"
                 >
                   <option [value]="RoleEnum.USER">Member (Standard User)</option>
-                  <option [value]="RoleEnum.ADMIN">Admin (User Manager)</option>
+                  <option *ngIf="authService.isSuperAdmin()" [value]="RoleEnum.ADMIN">Admin (User Manager)</option>
                   <option *ngIf="authService.isSuperAdmin()" [value]="RoleEnum.SUPER_ADMIN">Super Admin</option>
                 </select>
               </div>
@@ -220,7 +228,7 @@ import { User, UserRole, CreateUserInput } from '../../../models/user.model';
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     .header-title {
       display: flex;
@@ -249,6 +257,15 @@ import { User, UserRole, CreateUserInput } from '../../../models/user.model';
       font-size: 0.82rem;
       color: var(--text-muted);
       margin: 2px 0 0 0;
+    }
+    .admin-notice-banner {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      color: #93c5fd;
+      margin-bottom: 16px;
     }
     .admin-tabs {
       display: flex;
@@ -456,11 +473,18 @@ export class UserManagementModalComponent implements OnInit {
         this.users = data;
         this.loading = false;
       },
-      error: (err) => {
+      error: () => {
         this.errorMsg = 'Failed to load users.';
         this.loading = false;
       },
     });
+  }
+
+  canDelete(user: User): boolean {
+    if (user.id === this.authService.currentUser()?.id) return false;
+    if (this.authService.isSuperAdmin()) return true;
+    if (this.authService.isAdmin() && user.role === UserRole.USER) return true;
+    return false;
   }
 
   onAddUser() {

@@ -1,13 +1,12 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HeaderComponent } from '../header/header.component';
-import { TaskStatsComponent } from '../task-stats/task-stats.component';
-import { TaskToolbarComponent } from '../task-toolbar/task-toolbar.component';
-import { TaskListComponent } from '../task-list/task-list.component';
-import { KanbanBoardComponent } from '../kanban-board/kanban-board.component';
+import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard.component';
+import { MemberDashboardComponent } from './member-dashboard/member-dashboard.component';
 import { TaskFormComponent } from '../task-form/task-form.component';
 import { UserManagementModalComponent } from '../admin/user-management-modal/user-management-modal.component';
 import { AuditLogsModalComponent } from '../admin/audit-logs-modal/audit-logs-modal.component';
+import { NotificationsModalComponent } from '../admin/notifications-modal/notifications-modal.component';
 import { TaskService } from '../../services/task.service';
 import { AuthService } from '../../services/auth.service';
 import { Task } from '../../models/task.model';
@@ -18,13 +17,12 @@ import { Task } from '../../models/task.model';
   imports: [
     CommonModule,
     HeaderComponent,
-    TaskStatsComponent,
-    TaskToolbarComponent,
-    TaskListComponent,
-    KanbanBoardComponent,
+    AdminDashboardComponent,
+    MemberDashboardComponent,
     TaskFormComponent,
     UserManagementModalComponent,
     AuditLogsModalComponent,
+    NotificationsModalComponent,
   ],
   template: `
     <div class="app-layout">
@@ -33,31 +31,25 @@ import { Task } from '../../models/task.model';
         (openCreateModal)="openCreateModal()"
         (openUserManagementModal)="showUserModal = true"
         (openAuditLogsModal)="showLogsModal = true"
+        (openNotificationsModal)="showNotificationsModal = true"
       ></app-header>
 
-      <!-- Main Dashboard Content -->
+      <!-- Main Dashboard Content: Dynamic Switcher between Executive Admin and Member View -->
       <main class="main-content">
-        <!-- Key Metrics Cards -->
-        <app-task-stats></app-task-stats>
-
-        <!-- Search & Filter Toolbar -->
-        <app-task-toolbar
-          [currentView]="currentView"
-          (viewChange)="currentView = $event"
-        ></app-task-toolbar>
-
-        <!-- Dynamic View: List vs Kanban -->
-        <ng-container [ngSwitch]="currentView">
-          <app-task-list
-            *ngSwitchCase="'list'"
+        <!-- Executive Admin Dashboard (when user is Admin and in 'admin' mode) -->
+        <ng-container *ngIf="authService.isAdmin() && taskService.dashboardMode() === 'admin'">
+          <app-admin-dashboard
             (openCreateModal)="openCreateModal()"
             (openEditModal)="openEditModal($event)"
-          ></app-task-list>
+          ></app-admin-dashboard>
+        </ng-container>
 
-          <app-kanban-board
-            *ngSwitchCase="'kanban'"
+        <!-- Member Personal Dashboard (for standard users or Admin in 'personal' workspace mode) -->
+        <ng-container *ngIf="!authService.isAdmin() || taskService.dashboardMode() === 'personal'">
+          <app-member-dashboard
+            (openCreateModal)="openCreateModal()"
             (openEditModal)="openEditModal($event)"
-          ></app-kanban-board>
+          ></app-member-dashboard>
         </ng-container>
       </main>
 
@@ -79,11 +71,17 @@ import { Task } from '../../models/task.model';
         *ngIf="showLogsModal"
         (closeModal)="showLogsModal = false"
       ></app-audit-logs-modal>
+
+      <!-- Super Admin: Activity Alerts Modal -->
+      <app-notifications-modal
+        *ngIf="showNotificationsModal"
+        (closeModal)="showNotificationsModal = false"
+      ></app-notifications-modal>
     </div>
   `,
   styles: [`
     .app-layout {
-      max-width: 1200px;
+      max-width: 1240px;
       margin: 0 auto;
       padding: 32px 20px;
       min-height: 100vh;
@@ -98,10 +96,10 @@ export class DashboardComponent implements OnInit {
   taskService = inject(TaskService);
   authService = inject(AuthService);
 
-  currentView: 'list' | 'kanban' = 'list';
   showModal = false;
   showUserModal = false;
   showLogsModal = false;
+  showNotificationsModal = false;
   editingTask: Task | null = null;
 
   ngOnInit() {

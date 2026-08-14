@@ -12,6 +12,8 @@ import { User, UserRole } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { AuthLog, AuthLogAction } from '../auth/entities/auth-log.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/entities/notification.entity';
 import type { Request } from 'express';
 
 @Injectable()
@@ -21,6 +23,7 @@ export class UsersService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(AuthLog)
     private readonly authLogRepository: Repository<AuthLog>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   private extractClientMeta(req?: Request) {
@@ -101,6 +104,29 @@ export class UsersService {
     return user;
   }
 
+  async getAssignableUsers(currentUser: User): Promise<User[]> {
+    if (currentUser.role === UserRole.SUPER_ADMIN) {
+      return this.userRepository.find({
+        where: { isActive: true },
+        select: { id: true, name: true, email: true, role: true },
+        order: { name: 'ASC' },
+      });
+    }
+
+    if (currentUser.role === UserRole.ADMIN) {
+      return this.userRepository.find({
+        where: [
+          { role: UserRole.USER, isActive: true },
+          { id: currentUser.id, isActive: true },
+        ],
+        select: { id: true, name: true, email: true, role: true },
+        order: { name: 'ASC' },
+      });
+    }
+
+    return [currentUser];
+  }
+
   async createUser(
     createUserDto: CreateUserDto,
     creator: User,
@@ -118,10 +144,15 @@ export class UsersService {
 
     // Role assignment rules:
     // Only SUPER_ADMIN can create SUPER_ADMIN or other ADMINs.
-    // Regular ADMIN can only create USER or ADMIN.
+    // Regular ADMIN can ONLY create USER (Member).
     let targetRole = createUserDto.role || UserRole.USER;
-    if (targetRole === UserRole.SUPER_ADMIN && creator.role !== UserRole.SUPER_ADMIN) {
-      throw new ForbiddenException('Only Super Admins can assign the Super Admin role');
+
+    if (creator.role === UserRole.ADMIN) {
+      if (targetRole !== UserRole.USER) {
+        throw new ForbiddenException('Admin users can only provision standard Member accounts');
+      }
+    } else if (creator.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException('You do not have permission to provision users');
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
@@ -136,12 +167,23 @@ export class UsersService {
 
     const saved = await this.userRepository.save(newUser);
 
+    // If created by an Admin, notify Super Admin
+    if (creator.role === UserRole.ADMIN) {
+      await this.notificationsService.createNotification(
+        'Member Created by Admin',
+        `Admin ${creator.name} (${creator.email}) provisioned new member ${saved.name} (${saved.email})`,
+        creator.email,
+        saved.email,
+        NotificationType.MEMBER_CREATED,
+      );
+    }
+
     await this.recordAuditLog(
       AuthLogAction.USER_CREATED_BY_ADMIN,
       normalizedEmail,
       'SUCCESS',
       saved.id,
-      `User created by admin (${creator.email}) with role ${targetRole}`,
+      `User created by ${creator.role} (${creator.email}) with role ${targetRole}`,
       req,
     );
 
@@ -155,6 +197,10 @@ export class UsersService {
     creator: User,
     req?: Request,
   ): Promise<User> {
+    if (creator.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException('Only Super Admins have permission to modify user roles');
+    }
+
     if (creator.id === userId && updateRoleDto.role !== UserRole.SUPER_ADMIN) {
       throw new BadRequestException('You cannot change your own Super Admin role');
     }
@@ -170,7 +216,7 @@ export class UsersService {
       user.email,
       'SUCCESS',
       user.id,
-      `Role changed from ${oldRole} to ${updateRoleDto.role} by ${creator.email}`,
+      `Role changed from ${oldRole} to ${updateRoleDto.role} by Super Admin (${creator.email})`,
       req,
     );
 
@@ -183,6 +229,25 @@ export class UsersService {
     }
 
     const user = await this.findOne(userId);
+
+    // If Admin is deleting, they can only delete standard Members
+    if (creator.role === UserRole.ADMIN) {
+      if (user.role !== UserRole.USER) {
+        throw new ForbiddenException('Admins can only delete standard Member accounts');
+      }
+
+      // Notify Super Admin
+      await this.notificationsService.createNotification(
+        'Member Deleted by Admin',
+        `Admin ${creator.name} (${creator.email}) deleted member account ${user.name} (${user.email})`,
+        creator.email,
+        user.email,
+        NotificationType.MEMBER_DELETED,
+      );
+    } else if (creator.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException('Insufficient permissions to delete users');
+    }
+
     await this.userRepository.delete(userId);
 
     await this.recordAuditLog(
@@ -190,7 +255,7 @@ export class UsersService {
       user.email,
       'SUCCESS',
       null,
-      `User account ${user.email} deleted by ${creator.email}`,
+      `User account ${user.email} deleted by ${creator.role} (${creator.email})`,
       req,
     );
   }

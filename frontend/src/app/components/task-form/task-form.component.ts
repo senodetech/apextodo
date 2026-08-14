@@ -2,7 +2,10 @@ import { Component, EventEmitter, Input, Output, OnInit, inject } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService } from '../../services/task.service';
+import { AuthService } from '../../services/auth.service';
+import { UserAdminService } from '../../services/user-admin.service';
 import { Task, TaskPriority, CreateTaskInput } from '../../models/task.model';
+import { User } from '../../models/user.model';
 
 @Component({
   selector: 'app-task-form',
@@ -12,7 +15,7 @@ import { Task, TaskPriority, CreateTaskInput } from '../../models/task.model';
     <div class="modal-overlay" (click)="onBackdropClick($event)">
       <div class="modal-card glass-card">
         <div class="modal-header">
-          <h2>{{ editingTask ? 'Edit Task' : 'Create New Task' }}</h2>
+          <h2>{{ editingTask ? 'Edit & Reassign Task' : 'Create / Assign New Task' }}</h2>
           <button class="btn-icon" (click)="closeModal.emit()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18"/>
@@ -74,6 +77,21 @@ import { Task, TaskPriority, CreateTaskInput } from '../../models/task.model';
                 name="category"
               />
             </div>
+          </div>
+
+          <!-- Assign To User (Only visible to Admin & Super Admin) -->
+          <div class="form-group" *ngIf="authService.isAdmin()">
+            <label class="form-label">👤 Assign Task To</label>
+            <select
+              class="form-select"
+              [(ngModel)]="formData.assignedToId"
+              name="assignedToId"
+            >
+              <option value="">-- Unassigned (Self) --</option>
+              <option *ngFor="let u of assignableUsers" [value]="u.id">
+                {{ u.name }} ({{ u.role === 'SUPER_ADMIN' ? '👑 Super Admin' : (u.role === 'ADMIN' ? '🛡️ Admin' : 'Member') }})
+              </option>
+            </select>
           </div>
 
           <!-- Due Date -->
@@ -152,9 +170,12 @@ export class TaskFormComponent implements OnInit {
   @Output() closeModal = new EventEmitter<void>();
 
   taskService = inject(TaskService);
-  PriorityEnum = TaskPriority;
+  authService = inject(AuthService);
+  userAdminService = inject(UserAdminService);
 
+  PriorityEnum = TaskPriority;
   submitting = false;
+  assignableUsers: User[] = [];
 
   formData: CreateTaskInput = {
     title: '',
@@ -162,15 +183,23 @@ export class TaskFormComponent implements OnInit {
     priority: TaskPriority.MEDIUM,
     category: 'General',
     dueDate: '',
+    assignedToId: '',
   };
 
   ngOnInit() {
+    if (this.authService.isAdmin()) {
+      this.userAdminService.getAssignableUsers().subscribe({
+        next: (users) => (this.assignableUsers = users),
+      });
+    }
+
     if (this.editingTask) {
       this.formData = {
         title: this.editingTask.title,
         description: this.editingTask.description || '',
         priority: this.editingTask.priority,
         category: this.editingTask.category || 'General',
+        assignedToId: this.editingTask.assignedToId || '',
         dueDate: this.editingTask.dueDate
           ? new Date(this.editingTask.dueDate).toISOString().slice(0, 16)
           : '',
@@ -189,8 +218,13 @@ export class TaskFormComponent implements OnInit {
 
     this.submitting = true;
 
+    const payload = {
+      ...this.formData,
+      assignedToId: this.formData.assignedToId || undefined,
+    };
+
     if (this.editingTask) {
-      this.taskService.updateTask(this.editingTask.id, this.formData).subscribe({
+      this.taskService.updateTask(this.editingTask.id, payload).subscribe({
         next: () => {
           this.submitting = false;
           this.closeModal.emit();
@@ -198,7 +232,7 @@ export class TaskFormComponent implements OnInit {
         error: () => (this.submitting = false),
       });
     } else {
-      this.taskService.createTask(this.formData).subscribe({
+      this.taskService.createTask(payload).subscribe({
         next: () => {
           this.submitting = false;
           this.closeModal.emit();

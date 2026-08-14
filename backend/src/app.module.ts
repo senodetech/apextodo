@@ -4,9 +4,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TasksModule } from './tasks/tasks.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { Task } from './tasks/entities/task.entity';
 import { User } from './users/entities/user.entity';
 import { AuthLog } from './auth/entities/auth-log.entity';
+import { Notification } from './notifications/entities/notification.entity';
 
 @Module({
   imports: [
@@ -28,7 +30,7 @@ import { AuthLog } from './auth/entities/auth-log.entity';
             username: config.get<string>('DB_USERNAME', 'postgres'),
             password: config.get<string>('DB_PASSWORD', 'root'),
             database: config.get<string>('DB_NAME', 'todo_db'),
-            entities: [Task, User, AuthLog],
+            entities: [Task, User, AuthLog, Notification],
             synchronize: true,
           };
         }
@@ -36,13 +38,14 @@ import { AuthLog } from './auth/entities/auth-log.entity';
         return {
           type: 'better-sqlite3',
           database: 'todo.sqlite',
-          entities: [Task, User, AuthLog],
+          entities: [Task, User, AuthLog, Notification],
           synchronize: true,
         };
       },
     }),
     AuthModule,
     UsersModule,
+    NotificationsModule,
     TasksModule,
   ],
 })

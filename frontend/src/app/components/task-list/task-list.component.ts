@@ -35,8 +35,8 @@ import { Task, TaskPriority } from '../../models/task.model';
             <line x1="3" y1="10" x2="21" y2="10"/>
           </svg>
         </div>
-        <h3>No Tasks Found</h3>
-        <p>Create a new task or adjust your active filters to get started!</p>
+        <h3>No Tasks in this view</h3>
+        <p>Create a task or change your active filters to get started!</p>
         <button class="btn btn-primary" (click)="openCreateModal.emit()">
           + Add New Task
         </button>
@@ -81,6 +81,16 @@ import { Task, TaskPriority } from '../../models/task.model';
                   <line x1="7" y1="7" x2="7.01" y2="7"/>
                 </svg>
                 {{ task.category || 'General' }}
+              </span>
+
+              <!-- Assignee badge if assigned -->
+              <span *ngIf="task.assignedTo" class="assignee-badge">
+                👤 Assigned: {{ task.assignedTo.name }}
+              </span>
+
+              <!-- Creator badge if created by someone else -->
+              <span *ngIf="task.user" class="creator-badge">
+                ✍️ By {{ task.user.name }}
               </span>
 
               <span *ngIf="task.dueDate" class="due-date" [class.overdue]="isOverdue(task)">
@@ -186,12 +196,13 @@ import { Task, TaskPriority } from '../../models/task.model';
     .task-meta {
       display: flex;
       align-items: center;
-      gap: 14px;
+      flex-wrap: wrap;
+      gap: 10px;
       font-size: 0.78rem;
       color: var(--text-muted);
       margin-top: 4px;
     }
-    .category-tag, .due-date {
+    .category-tag, .due-date, .assignee-badge, .creator-badge {
       display: flex;
       align-items: center;
       gap: 5px;
@@ -199,6 +210,16 @@ import { Task, TaskPriority } from '../../models/task.model';
       padding: 2px 8px;
       border-radius: 4px;
       border: 1px solid var(--border-subtle);
+    }
+    .assignee-badge {
+      background: rgba(59, 130, 246, 0.1);
+      border-color: rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+    }
+    .creator-badge {
+      background: rgba(168, 85, 247, 0.1);
+      border-color: rgba(168, 85, 247, 0.3);
+      color: #d8b4fe;
     }
     .due-date.overdue {
       color: #fb7185;

@@ -15,6 +15,10 @@ export class UserAdminService {
     return this.http.get<User[]>(this.USERS_URL);
   }
 
+  getAssignableUsers(): Observable<User[]> {
+    return this.http.get<User[]>(`${this.USERS_URL}/assignable`);
+  }
+
   createUser(input: CreateUserInput): Observable<User> {
     return this.http.post<User>(this.USERS_URL, input);
   }

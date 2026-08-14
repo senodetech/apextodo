@@ -15,8 +15,18 @@ export interface Task {
   dueDate?: string;
   userId?: string;
   user?: { id?: string; name: string; email: string; role: string };
+  assignedToId?: string;
+  assignedTo?: { id?: string; name: string; email: string; role: string };
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PaginatedTasksResponse {
+  data: Task[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 export interface TaskFilter {
@@ -24,16 +34,27 @@ export interface TaskFilter {
   priority: string;
   category: string;
   search: string;
+  assignedToId?: string;
 }
 
 export interface TaskStats {
   total: number;
   completed: number;
   pending: number;
-  urgentCount: number;
-  highCount: number;
+  urgentHighCount: number;
   completionRate: number;
   categories: Record<string, number>;
+  // Executive Admin 6-widget metrics
+  activeUsersCount?: number;
+  adminsCount?: number;
+  membersCount?: number;
+  assignedCount?: number;
+  unassignedCount?: number;
+  securityLogsCount?: number;
+  isExecutive?: boolean;
+  // Member Personal metrics
+  assignedToMe?: number;
+  createdByMe?: number;
 }
 
 export interface CreateTaskInput {
@@ -43,6 +64,7 @@ export interface CreateTaskInput {
   category?: string;
   dueDate?: string;
   completed?: boolean;
+  assignedToId?: string;
 }
 
 export interface UpdateTaskInput {
@@ -52,4 +74,5 @@ export interface UpdateTaskInput {
   category?: string;
   dueDate?: string;
   completed?: boolean;
+  assignedToId?: string;
 }

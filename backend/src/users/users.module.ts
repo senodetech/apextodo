@@ -5,9 +5,14 @@ import { UsersController } from './users.controller';
 import { User } from './entities/user.entity';
 import { AuthLog } from '../auth/entities/auth-log.entity';
 import { AuthModule } from '../auth/auth.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, AuthLog]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([User, AuthLog]),
+    AuthModule,
+    NotificationsModule,
+  ],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService],
