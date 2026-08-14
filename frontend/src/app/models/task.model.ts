@@ -58,6 +58,7 @@ export interface TaskStats {
   isExecutive?: boolean;
   // Member Personal metrics
   assignedToMe?: number;
+  delegatedCount?: number;
   createdByMe?: number;
 }
 
