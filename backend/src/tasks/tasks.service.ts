@@ -345,6 +345,56 @@ export class TasksService implements OnModuleInit {
 
       const securityLogsCount = await this.authLogRepository.count();
 
+      // New Metric 1: Overdue & Due Soon
+      const now = new Date();
+      const next48h = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      const overdueCount = await this.taskRepository
+        .createQueryBuilder('task')
+        .where('task.completed = :completed', { completed: false })
+        .andWhere('task.dueDate IS NOT NULL')
+        .andWhere('task.dueDate < :now', { now })
+        .getCount();
+
+      const dueSoonCount = await this.taskRepository
+        .createQueryBuilder('task')
+        .where('task.completed = :completed', { completed: false })
+        .andWhere('task.dueDate IS NOT NULL')
+        .andWhere('task.dueDate >= :now AND task.dueDate <= :next48h', { now, next48h })
+        .getCount();
+
+      // New Metric 2: Weekly Velocity (Created in last 7 days)
+      const createdThisWeekCount = await this.taskRepository
+        .createQueryBuilder('task')
+        .where('task.createdAt >= :sevenDaysAgo', { sevenDaysAgo })
+        .getCount();
+
+      // New Metric 3: Top Workload Leader
+      const topAssigneeRaw = await this.taskRepository
+        .createQueryBuilder('task')
+        .innerJoin('task.assignedTo', 'assignee')
+        .select('assignee.id', 'userId')
+        .addSelect('assignee.name', 'name')
+        .addSelect('COUNT(task.id)', 'totalAssigned')
+        .addSelect(
+          'SUM(CASE WHEN task.completed = false THEN 1 ELSE 0 END)',
+          'activeAssigned',
+        )
+        .groupBy('assignee.id')
+        .addGroupBy('assignee.name')
+        .orderBy('"activeAssigned"', 'DESC')
+        .limit(1)
+        .getRawOne();
+
+      const topAssignee = topAssigneeRaw
+        ? {
+            name: topAssigneeRaw.name,
+            totalAssigned: parseInt(topAssigneeRaw.totalAssigned || '0', 10),
+            activeAssigned: parseInt(topAssigneeRaw.activeAssigned || '0', 10),
+          }
+        : null;
+
       const categoriesResult = await this.taskRepository
         .createQueryBuilder('task')
         .select('task.category', 'category')
@@ -369,6 +419,10 @@ export class TasksService implements OnModuleInit {
         assignedCount,
         unassignedCount,
         securityLogsCount,
+        overdueCount,
+        dueSoonCount,
+        createdThisWeekCount,
+        topAssignee,
         categories,
         isExecutive: true,
       };

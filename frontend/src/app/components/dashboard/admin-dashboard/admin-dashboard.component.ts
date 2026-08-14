@@ -10,7 +10,7 @@ import { FormsModule } from '@angular/forms';
   imports: [CommonModule, FormsModule, DatePipe],
   template: `
     <div class="admin-dashboard">
-      <!-- 6-Widget Executive Metrics Grid -->
+      <!-- 10-Widget Executive Command Center Grid -->
       <section class="metrics-grid">
         <!-- Widget 1: Total Tasks & Completion -->
         <div class="metric-card glass-card">
@@ -92,6 +92,65 @@ import { FormsModule } from '@angular/forms';
           <div class="metric-value">{{ taskService.stats()?.securityLogsCount || 0 }}</div>
           <div class="metric-subtext text-info">
             <span class="status-live-dot"></span> PostgreSQL Audit Active
+          </div>
+        </div>
+
+        <!-- Widget 7: Deadline Tracker (Overdue & Due Soon) -->
+        <div class="metric-card glass-card" [class.overdue-alert]="(taskService.stats()?.overdueCount || 0) > 0">
+          <div class="metric-header">
+            <span class="metric-label">Deadline Tracker</span>
+            <span class="metric-icon">⏱️</span>
+          </div>
+          <div class="metric-value" [class.text-danger]="(taskService.stats()?.overdueCount || 0) > 0">
+            {{ taskService.stats()?.overdueCount || 0 }} <span class="metric-unit">Overdue</span>
+          </div>
+          <div class="metric-subtext">
+            <span class="text-amber">{{ taskService.stats()?.dueSoonCount || 0 }} Due in 48 hrs</span>
+          </div>
+        </div>
+
+        <!-- Widget 8: Weekly Velocity -->
+        <div class="metric-card glass-card">
+          <div class="metric-header">
+            <span class="metric-label">Weekly Velocity</span>
+            <span class="metric-icon">⚡</span>
+          </div>
+          <div class="metric-value text-purple">+{{ taskService.stats()?.createdThisWeekCount || 0 }}</div>
+          <div class="metric-subtext">
+            <span class="text-success">↑ Active Pace</span>
+            <span class="separator">•</span>
+            <span>Last 7 Days</span>
+          </div>
+        </div>
+
+        <!-- Widget 9: Top Workload Contributor -->
+        <div class="metric-card glass-card">
+          <div class="metric-header">
+            <span class="metric-label">Workload Leader</span>
+            <span class="metric-icon">🎯</span>
+          </div>
+          <div class="metric-value leader-name">
+            {{ taskService.stats()?.topAssignee?.name || 'Evenly Distributed' }}
+          </div>
+          <div class="metric-subtext">
+            <span *ngIf="taskService.stats()?.topAssignee" class="text-info">
+              {{ taskService.stats()?.topAssignee?.activeAssigned || 0 }} active tasks assigned
+            </span>
+            <span *ngIf="!taskService.stats()?.topAssignee" class="text-muted">
+              No tasks currently assigned
+            </span>
+          </div>
+        </div>
+
+        <!-- Widget 10: Completed Tasks Output -->
+        <div class="metric-card glass-card">
+          <div class="metric-header">
+            <span class="metric-label">Resolved Milestones</span>
+            <span class="metric-icon">🏆</span>
+          </div>
+          <div class="metric-value text-green">{{ taskService.stats()?.completed || 0 }}</div>
+          <div class="metric-subtext">
+            <span class="text-amber">{{ taskService.stats()?.pending || 0 }} in active backlog</span>
           </div>
         </div>
       </section>
@@ -307,14 +366,14 @@ import { FormsModule } from '@angular/forms';
     }
     .metrics-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
       gap: 16px;
     }
     .metric-card {
-      padding: 20px;
+      padding: 18px 20px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       transition: transform 0.2s, box-shadow 0.2s;
     }
     .metric-card:hover {
@@ -325,13 +384,17 @@ import { FormsModule } from '@angular/forms';
       border-color: rgba(239, 68, 68, 0.3);
       background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(20, 26, 46, 0.8) 100%);
     }
+    .metric-card.overdue-alert {
+      border-color: rgba(239, 68, 68, 0.35);
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(20, 26, 46, 0.8) 100%);
+    }
     .metric-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     .metric-label {
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 600;
       color: #94a3b8;
       text-transform: uppercase;
@@ -341,14 +404,35 @@ import { FormsModule } from '@angular/forms';
       font-size: 1.25rem;
     }
     .metric-value {
-      font-size: 2rem;
+      font-size: 1.85rem;
       font-weight: 800;
       color: #f8fafc;
-      line-height: 1;
+      line-height: 1.1;
     }
     .critical-val {
       color: #f87171;
     }
+    .leader-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .metric-unit {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #94a3b8;
+    }
+    .text-danger { color: #f87171; }
+    .text-purple { color: #c084fc; }
+    .text-green { color: #34d399; }
+    .text-amber { color: #fbbf24; }
+    .text-info { color: #60a5fa; }
+    .text-success { color: #34d399; }
+    .text-muted { color: #64748b; }
+    .separator { color: #475569; margin: 0 4px; }
     .metric-progress-wrapper {
       display: flex;
       flex-direction: column;

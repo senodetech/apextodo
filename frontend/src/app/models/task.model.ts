@@ -44,13 +44,17 @@ export interface TaskStats {
   urgentHighCount: number;
   completionRate: number;
   categories: Record<string, number>;
-  // Executive Admin 6-widget metrics
+  // Executive Admin 10-widget metrics
   activeUsersCount?: number;
   adminsCount?: number;
   membersCount?: number;
   assignedCount?: number;
   unassignedCount?: number;
   securityLogsCount?: number;
+  overdueCount?: number;
+  dueSoonCount?: number;
+  createdThisWeekCount?: number;
+  topAssignee?: { name: string; totalAssigned: number; activeAssigned: number } | null;
   isExecutive?: boolean;
   // Member Personal metrics
   assignedToMe?: number;
