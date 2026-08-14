@@ -1,4 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { User } from '../../users/entities/user.entity';
 
 export enum TaskPriority {
   LOW = 'LOW',
@@ -34,9 +43,30 @@ export class Task {
   @Column({ nullable: true })
   dueDate?: Date;
 
+  @Column({ type: 'uuid', nullable: true })
+  userId?: string | null;
+
+  @ManyToOne(() => User, (user) => user.tasks, {
+    onDelete: 'CASCADE',
+    nullable: true,
+  })
+  @JoinColumn({ name: 'userId' })
+  user?: User | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  assignedToId?: string | null;
+
+  @ManyToOne(() => User, (user) => user.assignedTasks, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
+  @JoinColumn({ name: 'assignedToId' })
+  assignedTo?: User | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
 }
+

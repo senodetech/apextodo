@@ -1,4 +1,12 @@
-import { IsNotEmpty, IsString, IsOptional, IsEnum, IsBoolean, IsDateString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsBoolean,
+  IsDateString,
+  IsUUID,
+} from 'class-validator';
 import { TaskPriority } from '../entities/task.entity';
 
 export class CreateTaskDto {
@@ -25,4 +33,8 @@ export class CreateTaskDto {
   @IsOptional()
   @IsBoolean()
   completed?: boolean;
+
+  @IsOptional()
+  @IsUUID()
+  assignedToId?: string;
 }
