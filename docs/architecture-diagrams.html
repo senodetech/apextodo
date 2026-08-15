@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ApexTodo - System Architecture & Flow Diagrams (High Resolution)</title>
+  <!-- Mermaid.js for Ultra-Crisp Vector Rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --card-bg: rgba(17, 24, 39, 0.85);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --accent-blue: #3b82f6;
+      --accent-purple: #8b5cf6;
+      --accent-emerald: #10b981;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 40%);
+      color: var(--text-main);
+      padding: 40px 24px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+
+    .lead {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      max-width: 750px;
+      margin: 0 auto;
+    }
+
+    .nav-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin: 32px 0 48px;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .nav-btn:hover {
+      color: #fff;
+      border-color: var(--accent-blue);
+      transform: translateY(-2px);
+    }
+
+    .diagram-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 48px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(16px);
+      position: relative;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .section-title h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: #fff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-download:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+    }
+
+    .mermaid-container {
+      background: rgba(11, 15, 25, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 24px;
+      overflow-x: auto;
+      display: flex;
+      justify-content: center;
+      min-height: 300px;
+    }
+
+    .mermaid {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .mermaid svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 64px;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      padding-top: 24px;
+      border-top: 1px solid var(--card-border);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="badge">🏛️ UI & Enterprise System Architecture</div>
+      <h1>ApexTodo - Architecture & Flow Blueprints</h1>
+      <p class="lead">High-resolution vector blueprints covering Angular 19 Client SPA, NestJS Enterprise Gateway, Signals State Graph, and PostgreSQL Data Tier.</p>
+      
+      <div class="nav-tabs">
+        <a href="#diagram-1" class="nav-btn">1. Full System Architecture</a>
+        <a href="#diagram-2" class="nav-btn">2. Frontend Bootstrapping Flow</a>
+        <a href="#diagram-3" class="nav-btn">3. Dashboard Component Hierarchy</a>
+        <a href="#diagram-4" class="nav-btn">4. E2E Request & Token Refresh Flow</a>
+        <a href="#diagram-5" class="nav-btn">5. Backend Guard Pipeline</a>
+      </div>
+    </header>
+
+    <!-- Diagram 1: Full System Architecture -->
+    <section class="diagram-section" id="diagram-1">
+      <div class="section-header">
+        <div class="section-title">
+          <h2>🌐 1. Full-Stack System Architecture Blueprint</h2>
+          <p>Angular 19 Standalone Client ➔ Signals State ➔ HttpInterceptor ➔ NestJS API Gateway ➔ PostgreSQL</p>
+        </div>
+        <button class="btn-download" onclick="downloadSVG('svg-diagram-1', '01-apextodo-full-system-architecture.svg')">
+          📥 Download Vector SVG
+        </button>
+      </div>
+      <div class="mermaid-container" id="svg-diagram-1">
+        <div class="mermaid">
+flowchart TB
+    subgraph BROWSER_LAYER ["Client Browser (Angular 19 SPA)"]
+        direction TB
+        BOOT["index.html ➔ main.ts ➔ appConfig"]
+        ROUTER["Angular Router & Functional Guards (authGuard, adminGuard)"]
+        
+        subgraph SMART_CONTAINER ["Smart Container Layer"]
+            DASH["DashboardComponent (Orchestrator)"]
+            HEADER["HeaderComponent (Role Switcher & Notification Bell)"]
+        end
+        
+        subgraph PRESENTATIONAL_LAYER ["Presentational Views & Modals"]
+            ADMIN_DASH["AdminDashboardComponent (10 Widgets + Master Table)"]
+            MEMBER_DASH["MemberDashboardComponent (Scoped Tabs: Assigned/Created)"]
+            TASK_LIST["TaskListComponent (List View)"]
+            KANBAN["KanbanBoardComponent (Kanban View)"]
+            TASK_MODAL["TaskFormComponent (Create / Reassign)"]
+            USER_MODAL["UserManagementModalComponent (Admin RBAC)"]
+            ALERT_MODAL["NotificationsModalComponent (Super Admin Alert Center)"]
+        end
+
+        subgraph SIGNALS_STATE ["Reactive Signals State Layer"]
+            AUTH_STATE["AuthService (currentUser, tokens, role)"]
+            TASK_STATE["TaskService (tasks, stats, memberScope, pagination)"]
+            NOTIF_STATE["NotificationService (notifications, unreadCount)"]
+            ADMIN_STATE["UserAdminService (users, assignableUsers)"]
+        end
+
+        INTERCEPTOR["authInterceptor (Bearer Token Injection & 401 Auto-Refresh Loop)"]
+    end
+
+    subgraph BACKEND_LAYER ["NestJS Enterprise Gateway (Node.js API)"]
+        direction TB
+        GATEWAY["main.ts (CORS, Global ValidationPipe, Port 3000)"]
+        
+        subgraph GUARDS_PIPE ["Security & Interception Layer"]
+            JWT_GUARD["JwtAuthGuard (Passport JWT Strategy)"]
+            ROLE_GUARD["RolesGuard (@Roles: SUPER_ADMIN, ADMIN)"]
+        end
+
+        subgraph MODULES ["Domain Micro-Modules"]
+            AUTH_MOD["AuthModule (Login, Register, Refresh, Me)"]
+            USERS_MOD["UsersModule (Provision, Delete, Assignable)"]
+            TASKS_MOD["TasksModule (CRUD, Scoping, Pagination, Stats)"]
+            NOTIF_MOD["NotificationsModule (Alert Dispatcher & Unread)"]
+        end
+
+        subgraph DATA_LAYER ["TypeORM Repository Layer"]
+            TASK_REPO["TaskRepository (QueryBuilder)"]
+            USER_REPO["UserRepository"]
+            LOG_REPO["AuthLogRepository"]
+            NOTIF_REPO["NotificationRepository"]
+        end
+    end
+
+    subgraph DB_LAYER ["PostgreSQL Database (todo_db)"]
+        T_USERS[("users table")]
+        T_TASKS[("tasks table")]
+        T_LOGS[("auth_logs table")]
+        T_NOTIFS[("notifications table")]
+    end
+
+    %% UI Connections
+    BOOT --> ROUTER
+    ROUTER --> DASH
+    DASH --> HEADER
+    DASH --> ADMIN_DASH
+    DASH --> MEMBER_DASH
+    MEMBER_DASH --> TASK_LIST
+    MEMBER_DASH --> KANBAN
+    DASH --> TASK_MODAL
+    DASH --> USER_MODAL
+    DASH --> ALERT_MODAL
+
+    ADMIN_DASH -.-> TASK_STATE
+    MEMBER_DASH -.-> TASK_STATE
+    HEADER -.-> AUTH_STATE
+    HEADER -.-> NOTIF_STATE
+    TASK_STATE -.-> INTERCEPTOR
+    AUTH_STATE -.-> INTERCEPTOR
+    NOTIF_STATE -.-> INTERCEPTOR
+    ADMIN_STATE -.-> INTERCEPTOR
+
+    %% Network Connection
+    INTERCEPTOR ==>|REST API over HTTPS| GATEWAY
+
+    %% Backend Connections
+    GATEWAY --> JWT_GUARD --> ROLE_GUARD
+    ROLE_GUARD --> MODULES
+    MODULES --> DATA_LAYER
+    DATA_LAYER --> DB_LAYER
+        </div>
+      </div>
+    </section>
+
+    <!-- Diagram 2: Frontend Bootstrapping Flow -->
+    <section class="diagram-section" id="diagram-2">
+      <div class="section-header">
+        <div class="section-title">
+          <h2>🚀 2. Frontend Bootstrapping & Route Resolution Flow</h2>
+          <p>Sequence of events from HTML execution to Router Resolution and Dashboard initialization</p>
+        </div>
+        <button class="btn-download" onclick="downloadSVG('svg-diagram-2', '02-frontend-bootstrapping-flow.svg')">
+          📥 Download Vector SVG
+        </button>
+      </div>
+      <div class="mermaid-container" id="svg-diagram-2">
+        <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Browser as Client Browser
+    participant Index as index.html
+    participant Main as main.ts
+    participant Config as appConfig (app.config.ts)
+    participant App as AppComponent
+    participant Router as Angular Router & authGuard
+    participant AuthSvc as AuthService
+    participant Dash as DashboardComponent
+
+    Browser->>Index: Requests http://localhost:4200
+    Index->>Index: Parses &lt;app-root&gt;&lt;/app-root&gt; and loads bundle
+    Index->>Main: Executes bootstrapApplication(AppComponent, appConfig)
+    Main->>Config: Registers Providers (Router, Zone Event Coalescing, provideHttpClient + authInterceptor)
+    Config->>App: Instantiates root AppComponent with &lt;router-outlet&gt;
+    App->>Router: Navigates to default route "/"
+    Router->>AuthSvc: Reads tokens from localStorage (accessToken, refreshToken)
+    alt No Active Token
+        Router->>Browser: Redirects to /login (LoginComponent)
+    else Token Exists
+        Router->>Router: authGuard passes (returns true)
+        Router->>Dash: Loads DashboardComponent into &lt;router-outlet&gt;
+    end
+        </div>
+      </div>
+    </section>
+
+    <!-- Diagram 3: Dashboard Hierarchy -->
+    <section class="diagram-section" id="diagram-3">
+      <div class="section-header">
+        <div class="section-title">
+          <h2>🖥️ 3. Dashboard Component & Scoping Hierarchy</h2>
+          <p>Smart Container orchestrating Executive 10-Widget Command Center vs Scoped Operator Workspace</p>
+        </div>
+        <button class="btn-download" onclick="downloadSVG('svg-diagram-3', '03-dashboard-component-hierarchy.svg')">
+          📥 Download Vector SVG
+        </button>
+      </div>
+      <div class="mermaid-container" id="svg-diagram-3">
+        <div class="mermaid">
+flowchart TD
+    DASH[DashboardComponent: Smart Orchestrator] --> INIT{Check User Role & Mode}
+    
+    INIT -->|isAdmin && mode == 'admin'| AD[AdminDashboardComponent: Executive 10-Widget Command Center]
+    INIT -->|mode == 'personal' or Member| MD[MemberDashboardComponent: Scoped Operator Portal]
+    
+    AD --> TABLE[Master Organization Table: Creator & Assignee Tracking]
+    AD --> WIDGETS[10 Executive Metrics Grid]
+    
+    MD --> TABS{Active Scope Tab}
+    TABS -->|scope == 'assigned'| T1[📥 Tasks Assigned to Me]
+    TABS -->|scope == 'delegated'| T2[📤 Tasks I Assigned to Others]
+    TABS -->|scope == 'created'| T3[✍️ My Personal Created Tasks]
+    TABS -->|scope == 'all'| T4[📋 All Workspace Tasks]
+
+    MD --> VIEWS{Current View}
+    VIEWS -->|List View| TL[TaskListComponent]
+    VIEWS -->|Kanban View| KB[KanbanBoardComponent]
+        </div>
+      </div>
+    </section>
+
+    <!-- Diagram 4: E2E Request & Auto-Refresh Flow -->
+    <section class="diagram-section" id="diagram-4">
+      <div class="section-header">
+        <div class="section-title">
+          <h2>🔄 4. End-to-End Request, Interceptor & Auto-Refresh Flow</h2>
+          <p>Bearer token injection, 401 Unauthorized handling, and transparent token rotation loop</p>
+        </div>
+        <button class="btn-download" onclick="downloadSVG('svg-diagram-4', '04-e2e-request-refresh-sequence.svg')">
+          📥 Download Vector SVG
+        </button>
+      </div>
+      <div class="mermaid-container" id="svg-diagram-4">
+        <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant UI as Angular Component
+    participant Svc as TaskService
+    participant Interceptor as authInterceptor
+    participant AuthSvc as AuthService
+    participant API as NestJS TasksController
+    participant Guard as JwtAuthGuard & RolesGuard
+    participant TaskSvc as TasksService (Backend)
+    participant DB as PostgreSQL Database
+
+    UI->>Svc: User triggers loadTasks()
+    Svc->>Interceptor: HTTP GET /api/tasks?mode=admin&page=1&limit=20
+    Interceptor->>Interceptor: Appends Authorization: Bearer &lt;accessToken&gt;
+    Interceptor->>API: Dispatches Request to NestJS
+    API->>Guard: Checks JWT token validity
+    
+    alt Token Valid
+        Guard->>TaskSvc: findAll(filter, user)
+        TaskSvc->>DB: TypeORM QueryBuilder with joins on user & assignedTo
+        DB-->>TaskSvc: Returns { data: Task[], total: 24, page: 1, limit: 20 }
+        TaskSvc-->>API: Paginated Tasks Response
+        API-->>Interceptor: HTTP 200 OK + JSON
+        Interceptor-->>Svc: Emits data Observable
+        Svc->>Svc: Updates tasks.set(response.data) & total.set(response.total)
+        Svc-->>UI: Angular Signals automatically re-render DOM
+    else Token Expired (401 Unauthorized)
+        API-->>Interceptor: HTTP 401 Unauthorized
+        Interceptor->>AuthSvc: Triggers refreshSession()
+        AuthSvc->>API: POST /api/auth/refresh { refreshToken }
+        API->>DB: Validates & rotates refresh token in auth_logs
+        DB-->>API: Fresh tokens generated
+        API-->>AuthSvc: Returns { accessToken: "new_jwt", refreshToken: "new_ref" }
+        AuthSvc->>AuthSvc: Updates accessToken signal & localStorage
+        Interceptor->>API: Automatically retries original request with new token
+        API-->>Interceptor: HTTP 200 OK
+        Interceptor-->>Svc: Delivers data seamlessly (Zero UI interruption)
+    end
+        </div>
+      </div>
+    </section>
+
+    <!-- Diagram 5: Backend Security Pipeline -->
+    <section class="diagram-section" id="diagram-5">
+      <div class="section-header">
+        <div class="section-title">
+          <h2>🛡️ 5. Backend Security & Interception Pipeline</h2>
+          <p>Execution lifecycle from incoming HTTP request to Guard validation and Database execution</p>
+        </div>
+        <button class="btn-download" onclick="downloadSVG('svg-diagram-5', '05-backend-security-pipeline.svg')">
+          📥 Download Vector SVG
+        </button>
+      </div>
+      <div class="mermaid-container" id="svg-diagram-5">
+        <div class="mermaid">
+flowchart LR
+    REQ[HTTP Request] --> M1[CORS Middleware]
+    M1 --> M2[ValidationPipe: DTO Sanitization]
+    M2 --> G1[JwtAuthGuard: Token & User Hydration]
+    G1 --> G2[RolesGuard: RBAC Authorization]
+    G2 --> CTRL[Controller Endpoint]
+    CTRL --> SVC[Service Business Logic]
+    SVC --> NOTIF{Is Admin Action?}
+    NOTIF -->|Yes| ALERT[NotificationsService: Create Super Admin Alert]
+    SVC --> REPO[TypeORM Repository QueryBuilder]
+    REPO --> PG[(PostgreSQL Database)]
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>ApexTodo Architecture Blueprints • Generated for UI Architect Interview & Portfolio Showcase</p>
+    </footer>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        darkMode: true,
+        background: '#0b0f19',
+        primaryColor: '#3b82f6',
+        primaryTextColor: '#f8fafc',
+        primaryBorderColor: '#60a5fa',
+        lineColor: '#94a3b8',
+        secondaryColor: '#8b5cf6',
+        tertiaryColor: '#1e293b'
+      },
+      fontFamily: 'Plus Jakarta Sans, sans-serif'
+    });
+
+    // Helper to download rendered vector SVG
+    function downloadSVG(containerId, fileName) {
+      const container = document.getElementById(containerId);
+      const svg = container.querySelector('svg');
+      if (!svg) {
+        alert('Diagram is still rendering, please try again in a second.');
+        return;
+      }
+      
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      
+      const downloadLink = document.createElement('a');
+      downloadLink.href = svgUrl;
+      downloadLink.download = fileName;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      URL.revokeObjectURL(svgUrl);
+    }
+  </script>
+</body>
+</html>
