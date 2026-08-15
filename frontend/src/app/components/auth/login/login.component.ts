@@ -4,25 +4,22 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { LoginInput } from '../../../models/user.model';
+import { BrandLogoComponent } from '../../shared/brand-logo/brand-logo.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, BrandLogoComponent],
   template: `
     <div class="auth-page">
       <div class="auth-container">
-        <!-- Logo & Branding -->
-        <div class="brand-header">
-          <div class="logo-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
-              <path d="m9 12 2 2 4-4"/>
-            </svg>
-          </div>
-          <h1>Apex<span class="highlight">Tasks</span></h1>
-          <p class="subtitle">Next-Gen Workspace & Productivity</p>
-        </div>
+        <!-- Reusable Brand Logo Component -->
+        <app-brand-logo
+          layout="vertical"
+          size="lg"
+          subtitle="Next-Gen Workspace & Productivity"
+          style="margin-bottom: 28px;"
+        ></app-brand-logo>
 
         <!-- Login Card -->
         <div class="auth-card glass-card">
