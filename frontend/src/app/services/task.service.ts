@@ -10,6 +10,7 @@ import {
 } from '../models/task.model';
 import { Observable, catchError, tap, of } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -17,7 +18,7 @@ import { AuthService } from './auth.service';
 export class TaskService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
-  private apiUrl = 'http://localhost:3000/api/tasks';
+  private apiUrl = `${environment.apiUrl}/tasks`;
 
   // Signals State
   tasks = signal<Task[]>([]);

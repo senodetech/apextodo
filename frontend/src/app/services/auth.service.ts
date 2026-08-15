@@ -9,6 +9,7 @@ import {
   LoginInput,
   RegisterInput,
 } from '../models/user.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -17,7 +18,7 @@ export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
 
-  private readonly API_URL = 'http://localhost:3000/api/auth';
+  private readonly API_URL = `${environment.apiUrl}/auth`;
   private readonly ACCESS_TOKEN_KEY = 'apex_access_token';
   private readonly REFRESH_TOKEN_KEY = 'apex_refresh_token';
   private readonly USER_KEY = 'apex_user_profile';
