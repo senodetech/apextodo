@@ -4,24 +4,22 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { LoginInput } from '../../../models/user.model';
+import { BrandLogoComponent } from '../../shared/brand-logo/brand-logo.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, BrandLogoComponent],
   template: `
     <div class="auth-page">
       <div class="auth-container">
-        <!-- Logo & Branding -->
-        <div class="brand-header">
-          <div class="logo-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          <h1>ApexTodo</h1>
-          <p class="subtitle">Next-Generation Task Management & Productivity</p>
-        </div>
+        <!-- Reusable Brand Logo Component -->
+        <app-brand-logo
+          layout="vertical"
+          size="lg"
+          subtitle="Next-Gen Workspace & Productivity"
+          style="margin-bottom: 28px;"
+        ></app-brand-logo>
 
         <!-- Login Card -->
         <div class="auth-card glass-card">
@@ -174,6 +172,11 @@ import { LoginInput } from '../../../models/user.model';
       color: #fff;
       letter-spacing: -0.5px;
       margin: 0;
+    }
+    .highlight {
+      background: linear-gradient(135deg, #a855f7, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
     .subtitle {
       font-size: 0.88rem;

@@ -3,24 +3,22 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
+import { BrandLogoComponent } from '../../shared/brand-logo/brand-logo.component';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, BrandLogoComponent],
   template: `
     <div class="auth-page">
       <div class="auth-container">
-        <!-- Logo & Branding -->
-        <div class="brand-header">
-          <div class="logo-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          <h1>ApexTodo</h1>
-          <p class="subtitle">Join the Enterprise Task Workspace</p>
-        </div>
+        <!-- Reusable Brand Logo Component -->
+        <app-brand-logo
+          layout="vertical"
+          size="lg"
+          subtitle="Join the Enterprise Task Workspace"
+          style="margin-bottom: 24px;"
+        ></app-brand-logo>
 
         <!-- Register Card -->
         <div class="auth-card glass-card">
@@ -199,6 +197,11 @@ import { AuthService } from '../../../services/auth.service';
       font-weight: 800;
       color: #fff;
       margin: 0;
+    }
+    .highlight {
+      background: linear-gradient(135deg, #a855f7, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
     .subtitle {
       font-size: 0.88rem;

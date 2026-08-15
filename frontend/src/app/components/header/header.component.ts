@@ -4,25 +4,15 @@ import { AuthService } from '../../services/auth.service';
 import { TaskService } from '../../services/task.service';
 import { NotificationService } from '../../services/notification.service';
 import { UserRole } from '../../models/user.model';
+import { BrandLogoComponent } from '../shared/brand-logo/brand-logo.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, BrandLogoComponent],
   template: `
     <header class="app-header glass-card">
-      <div class="brand">
-        <div class="logo-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
-            <path d="m9 12 2 2 4-4"/>
-          </svg>
-        </div>
-        <div class="brand-text">
-          <h1>Apex<span class="highlight">Tasks</span></h1>
-          <p class="subtitle">Next-Gen Workspace</p>
-        </div>
-      </div>
+      <app-brand-logo layout="horizontal" size="md" subtitle="Next-Gen Workspace"></app-brand-logo>
 
       <!-- Center: Workspace Mode Switcher (Visible to Admins / Super Admins) -->
       <div class="workspace-switcher" *ngIf="authService.isAdmin()">
