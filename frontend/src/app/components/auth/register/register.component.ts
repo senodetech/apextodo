@@ -14,11 +14,12 @@ import { AuthService } from '../../../services/auth.service';
         <!-- Logo & Branding -->
         <div class="brand-header">
           <div class="logo-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+              <path d="m9 12 2 2 4-4"/>
             </svg>
           </div>
-          <h1>ApexTodo</h1>
+          <h1>Apex<span class="highlight">Tasks</span></h1>
           <p class="subtitle">Join the Enterprise Task Workspace</p>
         </div>
 
@@ -199,6 +200,11 @@ import { AuthService } from '../../../services/auth.service';
       font-weight: 800;
       color: #fff;
       margin: 0;
+    }
+    .highlight {
+      background: linear-gradient(135deg, #a855f7, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
     .subtitle {
       font-size: 0.88rem;
