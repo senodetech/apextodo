@@ -2,6 +2,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Notification } from '../models/notification.model';
 import { AuthService } from './auth.service';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -9,7 +10,7 @@ import { AuthService } from './auth.service';
 export class NotificationService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
-  private readonly API_URL = 'http://localhost:3000/api/notifications';
+  private readonly API_URL = `${environment.apiUrl}/notifications`;
 
   notifications = signal<Notification[]>([]);
   unreadCount = signal<number>(0);

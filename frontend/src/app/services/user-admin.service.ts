@@ -2,14 +2,15 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User, UserRole, CreateUserInput, AuthLog } from '../models/user.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UserAdminService {
   private http = inject(HttpClient);
-  private readonly USERS_URL = 'http://localhost:3000/api/users';
-  private readonly AUTH_URL = 'http://localhost:3000/api/auth';
+  private readonly USERS_URL = `${environment.apiUrl}/users`;
+  private readonly AUTH_URL = `${environment.apiUrl}/auth`;
 
   getUsers(): Observable<User[]> {
     return this.http.get<User[]>(this.USERS_URL);
