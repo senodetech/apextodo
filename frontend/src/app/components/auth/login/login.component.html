@@ -1,0 +1,120 @@
+<div class="auth-page">
+  <div class="auth-container">
+    <!-- Reusable Brand Logo Component -->
+    <app-brand-logo
+      layout="vertical"
+      size="lg"
+      subtitle="Next-Gen Workspace & Productivity"
+      style="margin-bottom: 28px;"
+    ></app-brand-logo>
+
+    <!-- Login Card -->
+    <div class="auth-card glass-card">
+      <div class="card-header">
+        <h2>Welcome Back</h2>
+        <p>Enter your credentials to access your dashboard</p>
+      </div>
+
+      <!-- Error Alert -->
+      <div *ngIf="authService.error()" class="alert-error">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>{{ authService.error() }}</span>
+      </div>
+
+      <form (ngSubmit)="onSubmit()" class="auth-form">
+        <!-- Email -->
+        <div class="form-group">
+          <label class="form-label" for="login-email">Email Address</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <input
+              id="login-email"
+              type="email"
+              class="form-input with-icon"
+              placeholder="name@company.com"
+              [(ngModel)]="formData.email"
+              name="email"
+              required
+              autofocus
+            />
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label class="form-label" for="login-password">Password</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input
+              id="login-password"
+              [type]="showPassword ? 'text' : 'password'"
+              class="form-input with-icon"
+              placeholder="••••••••"
+              [(ngModel)]="formData.password"
+              name="password"
+              required
+            />
+            <button
+              type="button"
+              class="btn-toggle-pw"
+              (click)="showPassword = !showPassword"
+              tabindex="-1"
+            >
+              {{ showPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Remember Me & Security Row -->
+        <div class="form-options-row">
+          <label class="checkbox-label" for="remember-me-check">
+            <input
+              id="remember-me-check"
+              type="checkbox"
+              class="custom-checkbox"
+              [(ngModel)]="rememberMe"
+              name="rememberMe"
+            />
+            <span>Remember me</span>
+          </label>
+
+          <span class="secure-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Encrypted Session
+          </span>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="btn btn-primary btn-block"
+          [disabled]="!formData.email.trim() || !formData.password || authService.loading()"
+        >
+          <div *ngIf="authService.loading()" class="spinner-sm"></div>
+          <span>{{ authService.loading() ? 'Signing in...' : 'Sign In to Dashboard' }}</span>
+        </button>
+      </form>
+
+      <!-- Footer Switcher -->
+      <div class="card-footer">
+        <p>
+          Don't have an account?
+          <a routerLink="/register" class="link-highlight">Create an account</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

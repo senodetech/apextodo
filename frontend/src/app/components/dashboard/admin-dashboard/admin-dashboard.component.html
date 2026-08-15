@@ -1,0 +1,348 @@
+<div class="admin-dashboard">
+  <!-- 10-Widget Executive Command Center Grid -->
+  <section class="metrics-grid">
+    <!-- Widget 1: Total Tasks & Completion -->
+    <div class="metric-card glass-card">
+      <div class="metric-header">
+        <span class="metric-label">System Tasks</span>
+        <span class="metric-icon">📊</span>
+      </div>
+      <div class="metric-value">{{ taskService.stats()?.total || 0 }}</div>
+      <div class="metric-progress-wrapper">
+        <div class="progress-bar-bg">
+          <div
+            class="progress-bar-fill"
+            [style.width.%]="taskService.stats()?.completionRate || 0"
+          ></div>
+        </div>
+        <span class="progress-text">{{ taskService.stats()?.completionRate || 0 }}% completed</span>
+      </div>
+    </div>
+
+    <!-- Widget 2: Active Team Size -->
+    <div class="metric-card glass-card">
+      <div class="metric-header">
+        <span class="metric-label">Team Members</span>
+        <span class="metric-icon">👥</span>
+      </div>
+      <div class="metric-value">{{ taskService.stats()?.activeUsersCount || 0 }}</div>
+      <div class="metric-subtext">
+        <span class="badge-sub admin">{{ taskService.stats()?.adminsCount || 0 }} Admins</span>
+        <span class="badge-sub member">{{ taskService.stats()?.membersCount || 0 }} Members</span>
+      </div>
+    </div>
+
+    <!-- Widget 3: Critical & Urgent Focus -->
+    <div class="metric-card glass-card urgent-highlight">
+      <div class="metric-header">
+        <span class="metric-label">Critical Action Items</span>
+        <span class="metric-icon">🚨</span>
+      </div>
+      <div class="metric-value critical-val">{{ taskService.stats()?.urgentHighCount || 0 }}</div>
+      <div class="metric-subtext warning">Urgent / High Priority Pending</div>
+    </div>
+
+    <!-- Widget 4: Task Assignment Distribution -->
+    <div class="metric-card glass-card">
+      <div class="metric-header">
+        <span class="metric-label">Task Assignment</span>
+        <span class="metric-icon">📌</span>
+      </div>
+      <div class="metric-value">{{ taskService.stats()?.assignedCount || 0 }}</div>
+      <div class="metric-subtext">
+        <span class="text-success">{{ taskService.stats()?.assignedCount || 0 }} Assigned</span>
+        <span class="separator">•</span>
+        <span class="text-muted">{{ taskService.stats()?.unassignedCount || 0 }} Unassigned</span>
+      </div>
+    </div>
+
+    <!-- Widget 5: Category Diversity -->
+    <div class="metric-card glass-card">
+      <div class="metric-header">
+        <span class="metric-label">Top Categories</span>
+        <span class="metric-icon">🏷️</span>
+      </div>
+      <div class="category-pills-list">
+        <span
+          *ngFor="let cat of getTopCategories()"
+          class="cat-badge"
+        >
+          {{ cat.name }}: <strong>{{ cat.count }}</strong>
+        </span>
+      </div>
+    </div>
+
+    <!-- Widget 6: Security & Audit Health -->
+    <div class="metric-card glass-card">
+      <div class="metric-header">
+        <span class="metric-label">Security Audit Logs</span>
+        <span class="metric-icon">🛡️</span>
+      </div>
+      <div class="metric-value">{{ taskService.stats()?.securityLogsCount || 0 }}</div>
+      <div class="metric-subtext text-info">
+        <span class="status-live-dot"></span> PostgreSQL Audit Active
+      </div>
+    </div>
+
+    <!-- Widget 7: Deadline Tracker (Overdue & Due Soon) -->
+    <div class="metric-card glass-card" [class.overdue-alert]="(taskService.stats()?.overdueCount || 0) > 0">
+      <div class="metric-header">
+        <span class="metric-label">Deadline Tracker</span>
+        <span class="metric-icon">⏱️</span>
+      </div>
+      <div class="metric-value" [class.text-danger]="(taskService.stats()?.overdueCount || 0) > 0">
+        {{ taskService.stats()?.overdueCount || 0 }} <span class="metric-unit">Overdue</span>
+      </div>
+      <div class="metric-subtext">
+        <span class="text-amber">{{ taskService.stats()?.dueSoonCount || 0 }} Due in 48 hrs</span>
+      </div>
+    </div>
+
+    <!-- Widget 8: Weekly Velocity -->
+    <div class="metric-card glass-card">
+      <div class="metric-header">
+        <span class="metric-label">Weekly Velocity</span>
+        <span class="metric-icon">⚡</span>
+      </div>
+      <div class="metric-value text-purple">+{{ taskService.stats()?.createdThisWeekCount || 0 }}</div>
+      <div class="metric-subtext">
+        <span class="text-success">↑ Active Pace</span>
+        <span class="separator">•</span>
+        <span>Last 7 Days</span>
+      </div>
+    </div>
+
+    <!-- Widget 9: Top Workload Contributor -->
+    <div class="metric-card glass-card">
+      <div class="metric-header">
+        <span class="metric-label">Workload Leader</span>
+        <span class="metric-icon">🎯</span>
+      </div>
+      <div class="metric-value leader-name">
+        {{ taskService.stats()?.topAssignee?.name || 'Evenly Distributed' }}
+      </div>
+      <div class="metric-subtext">
+        <span *ngIf="taskService.stats()?.topAssignee" class="text-info">
+          {{ taskService.stats()?.topAssignee?.activeAssigned || 0 }} active tasks assigned
+        </span>
+        <span *ngIf="!taskService.stats()?.topAssignee" class="text-muted">
+          No tasks currently assigned
+        </span>
+      </div>
+    </div>
+
+    <!-- Widget 10: Completed Tasks Output -->
+    <div class="metric-card glass-card">
+      <div class="metric-header">
+        <span class="metric-label">Resolved Milestones</span>
+        <span class="metric-icon">🏆</span>
+      </div>
+      <div class="metric-value text-green">{{ taskService.stats()?.completed || 0 }}</div>
+      <div class="metric-subtext">
+        <span class="text-amber">{{ taskService.stats()?.pending || 0 }} in active backlog</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Executive Task Toolbar -->
+  <section class="toolbar-section glass-card">
+    <div class="toolbar-left">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          placeholder="Search tasks across company..."
+          [ngModel]="taskService.filter().search"
+          (ngModelChange)="onSearchChange($event)"
+        />
+      </div>
+
+      <div class="filter-group">
+        <select
+          [ngModel]="taskService.filter().priority"
+          (ngModelChange)="onPriorityChange($event)"
+          class="custom-select"
+        >
+          <option value="all">All Priorities</option>
+          <option value="URGENT">Urgent</option>
+          <option value="HIGH">High</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="LOW">Low</option>
+        </select>
+
+        <select
+          [ngModel]="taskService.filter().category"
+          (ngModelChange)="onCategoryChange($event)"
+          class="custom-select"
+        >
+          <option value="all">All Categories</option>
+          <option *ngFor="let cat of taskService.categories()" [value]="cat">
+            {{ cat }}
+          </option>
+        </select>
+
+        <select
+          [ngModel]="taskService.filter().completed"
+          (ngModelChange)="onStatusChange($event)"
+          class="custom-select"
+        >
+          <option value="all">All Status</option>
+          <option value="active">Active Only</option>
+          <option value="completed">Completed Only</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="toolbar-right">
+      <button class="btn-create" (click)="openCreateModal.emit()">
+        <span>+</span> Assign New Task
+      </button>
+    </div>
+  </section>
+
+  <!-- Master Organization Tasks Table -->
+  <section class="table-section glass-card">
+    <div class="table-header-title">
+      <div>
+        <h3>Organization Master Task Board</h3>
+        <p>Showing full audit trail of creator, assignee, priority, and completion</p>
+      </div>
+      <div class="table-pagination-top">
+        Showing {{ (taskService.page() - 1) * taskService.limit() + (taskService.tasks().length > 0 ? 1 : 0) }} -
+        {{ (taskService.page() - 1) * taskService.limit() + taskService.tasks().length }} of {{ taskService.total() }} tasks
+      </div>
+    </div>
+
+    <div *ngIf="taskService.loading()" class="loading-state">
+      <div class="spinner"></div>
+      <span>Loading organization tasks...</span>
+    </div>
+
+    <div *ngIf="!taskService.loading() && taskService.tasks().length === 0" class="empty-state">
+      <span>📋</span>
+      <h4>No tasks found</h4>
+      <p>Try adjusting your search filters or assign a new task.</p>
+    </div>
+
+    <div *ngIf="!taskService.loading() && taskService.tasks().length > 0" class="table-wrapper">
+      <table class="tasks-table">
+        <thead>
+          <tr>
+            <th style="width: 48px;">Status</th>
+            <th>Task Details</th>
+            <th>Priority</th>
+            <th>Category</th>
+            <th>Created By & Timestamp</th>
+            <th>Assigned To</th>
+            <th>Due Date</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let task of taskService.tasks()" [class.completed-row]="task.completed">
+            <!-- Checkbox -->
+            <td>
+              <input
+                type="checkbox"
+                [checked]="task.completed"
+                (change)="taskService.toggleComplete(task)"
+                class="task-check"
+              />
+            </td>
+
+            <!-- Title & Description -->
+            <td class="task-info-cell">
+              <div class="task-title" [class.line-through]="task.completed">{{ task.title }}</div>
+              <div *ngIf="task.description" class="task-desc">{{ task.description }}</div>
+            </td>
+
+            <!-- Priority Badge -->
+            <td>
+              <span class="priority-badge" [ngClass]="task.priority.toLowerCase()">
+                {{ task.priority }}
+              </span>
+            </td>
+
+            <!-- Category -->
+            <td>
+              <span class="category-tag">{{ task.category }}</span>
+            </td>
+
+            <!-- Creator & Creation Time -->
+            <td class="creator-cell">
+              <div class="creator-name">
+                <span class="user-avatar-mini">{{ getInitials(task.user?.name || 'System') }}</span>
+                <span>{{ task.user?.name || 'System Admin' }}</span>
+              </div>
+              <div class="creator-timestamp">
+                {{ task.createdAt | date:'medium' }}
+              </div>
+            </td>
+
+            <!-- Assignee -->
+            <td class="assignee-cell">
+              <span *ngIf="task.assignedTo" class="assignee-pill">
+                <span class="assignee-dot"></span>
+                {{ task.assignedTo.name }}
+              </span>
+              <span *ngIf="!task.assignedTo" class="unassigned-pill">
+                Unassigned
+              </span>
+            </td>
+
+            <!-- Due Date -->
+            <td>
+              <span *ngIf="task.dueDate" class="due-text">{{ task.dueDate | date:'mediumDate' }}</span>
+              <span *ngIf="!task.dueDate" class="no-due">—</span>
+            </td>
+
+            <!-- Actions -->
+            <td style="text-align: right;">
+              <div class="action-buttons">
+                <button class="btn-action edit" (click)="openEditModal.emit(task)" title="Edit / Reassign">
+                  ✏️
+                </button>
+                <button class="btn-action delete" (click)="taskService.deleteTask(task.id)" title="Delete Task">
+                  🗑️
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls (20 tasks per page) -->
+    <div class="pagination-footer" *ngIf="taskService.totalPages() > 1 || taskService.total() > 0">
+      <div class="pagination-info">
+        Page <strong>{{ taskService.page() }}</strong> of <strong>{{ taskService.totalPages() }}</strong> (20 per page)
+      </div>
+      <div class="pagination-controls">
+        <button
+          class="btn-page"
+          [disabled]="taskService.page() === 1"
+          (click)="taskService.prevPage()"
+        >
+          ← Previous
+        </button>
+
+        <button
+          *ngFor="let p of getPageArray()"
+          class="btn-page-num"
+          [class.active]="p === taskService.page()"
+          (click)="taskService.setPage(p)"
+        >
+          {{ p }}
+        </button>
+
+        <button
+          class="btn-page"
+          [disabled]="taskService.page() === taskService.totalPages()"
+          (click)="taskService.nextPage()"
+        >
+          Next →
+        </button>
+      </div>
+    </div>
+  </section>
+</div>

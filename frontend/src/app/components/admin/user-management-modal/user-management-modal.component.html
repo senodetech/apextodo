@@ -1,0 +1,205 @@
+<div class="modal-overlay" (click)="onBackdropClick($event)">
+  <div class="modal-card glass-card admin-modal">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <div class="header-title">
+        <div class="icon-badge">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Team & User Management</h2>
+          <p>Manage system users, roles, and administrative access</p>
+        </div>
+      </div>
+      <button class="btn-icon" (click)="closeModal.emit()" title="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Role Authority Notice for Admins -->
+    <div *ngIf="!authService.isSuperAdmin()" class="admin-notice-banner">
+      <span>ℹ️ As an Admin, you can provision and manage standard Member accounts. Actions will notify the Super Admin.</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="admin-tabs">
+      <button
+        class="tab-btn"
+        [class.active]="activeTab === 'list'"
+        (click)="activeTab = 'list'"
+      >
+        All Users ({{ users.length }})
+      </button>
+      <button
+        class="tab-btn btn-highlight"
+        [class.active]="activeTab === 'create'"
+        (click)="activeTab = 'create'"
+      >
+        + Add New User
+      </button>
+    </div>
+
+    <!-- Error & Success Banners -->
+    <div *ngIf="errorMsg" class="alert alert-error">
+      <span>{{ errorMsg }}</span>
+    </div>
+    <div *ngIf="successMsg" class="alert alert-success">
+      <span>{{ successMsg }}</span>
+    </div>
+
+    <!-- TAB 1: User List -->
+    <div *ngIf="activeTab === 'list'" class="tab-content">
+      <div *ngIf="loading" class="loading-box">
+        <div class="spinner"></div>
+        <p>Loading users...</p>
+      </div>
+
+      <div *ngIf="!loading && users.length > 0" class="table-responsive">
+        <table class="user-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Role</th>
+              <th>Tasks</th>
+              <th>Joined Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of users">
+              <td>
+                <div class="user-cell">
+                  <div class="avatar-initials" [class.avatar-super]="user.role === 'SUPER_ADMIN'">
+                    {{ getInitials(user.name) }}
+                  </div>
+                  <div class="user-details">
+                    <span class="user-name">{{ user.name }}</span>
+                    <span class="user-email">{{ user.email }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="role-badge" [ngClass]="getRoleClass(user.role)">
+                  {{ formatRole(user.role) }}
+                </span>
+              </td>
+              <td>
+                <span class="task-count-pill">{{ user.taskCount || 0 }} tasks</span>
+              </td>
+              <td class="date-cell">
+                {{ user.createdAt | date:'mediumDate' }}
+              </td>
+              <td>
+                <div class="actions-cell">
+                  <!-- Promote/Demote: Exclusive to Super Admin -->
+                  <button
+                    *ngIf="authService.isSuperAdmin() && user.role !== 'SUPER_ADMIN'"
+                    class="btn-sm btn-action"
+                    (click)="toggleRole(user)"
+                    [title]="user.role === 'ADMIN' ? 'Demote to Member' : 'Promote to Admin'"
+                  >
+                    {{ user.role === 'ADMIN' ? 'Demote' : 'Promote' }}
+                  </button>
+
+                  <!-- Delete: Super Admin can delete anyone except self; Admin can delete Members only -->
+                  <button
+                    *ngIf="canDelete(user)"
+                    class="btn-icon text-danger"
+                    (click)="deleteUser(user)"
+                    title="Remove user"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: Create User Form -->
+    <div *ngIf="activeTab === 'create'" class="tab-content">
+      <form (ngSubmit)="onAddUser()" class="create-user-form">
+        <div class="form-row">
+          <div class="form-group half-width">
+            <label class="form-label">Full Name *</label>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="e.g. Sarah Jenkins"
+              [(ngModel)]="newUser.name"
+              name="name"
+              required
+            />
+          </div>
+          <div class="form-group half-width">
+            <label class="form-label">Email Address *</label>
+            <input
+              type="email"
+              class="form-input"
+              placeholder="sarah@company.com"
+              [(ngModel)]="newUser.email"
+              name="email"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group half-width">
+            <label class="form-label">Password * (min 6 chars)</label>
+            <input
+              type="password"
+              class="form-input"
+              placeholder="••••••••"
+              [(ngModel)]="newUser.password"
+              name="password"
+              required
+            />
+          </div>
+          <div class="form-group half-width">
+            <label class="form-label">Assigned Role *</label>
+            <select
+              class="form-select"
+              [(ngModel)]="newUser.role"
+              name="role"
+            >
+              <option [value]="RoleEnum.USER">Member (Standard User)</option>
+              <option *ngIf="authService.isSuperAdmin()" [value]="RoleEnum.ADMIN">Admin (User Manager)</option>
+              <option *ngIf="authService.isSuperAdmin()" [value]="RoleEnum.SUPER_ADMIN">Super Admin</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="activeTab = 'list'"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="!newUser.name.trim() || !newUser.email.trim() || !newUser.password || submitting"
+          >
+            {{ submitting ? 'Adding User...' : 'Create & Provision User' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

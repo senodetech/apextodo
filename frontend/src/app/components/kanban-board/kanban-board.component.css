@@ -1,0 +1,75 @@
+.kanban-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.kanban-column {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 500px;
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.header-title { display: flex; align-items: center; gap: 8px; }
+.header-title h3 { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: #fff; margin: 0; }
+
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot-todo { background: #38bdf8; box-shadow: 0 0 8px #38bdf8; }
+.dot-urgent { background: #f43f5e; box-shadow: 0 0 8px #f43f5e; }
+.dot-completed { background: #34d399; box-shadow: 0 0 8px #34d399; }
+
+.count-badge {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.count-urgent { background: rgba(244, 63, 94, 0.2); color: #fb7185; }
+.count-completed { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+
+.cards-list { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+
+.kanban-card {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.6);
+}
+.border-urgent { border-left: 3px solid #f43f5e; }
+.is-done { opacity: 0.6; }
+
+.card-top { display: flex; justify-content: space-between; align-items: center; }
+.card-title { font-size: 0.95rem; font-weight: 600; color: #fff; margin: 0; }
+.strikethrough { text-decoration: line-through; color: var(--text-muted); }
+.card-desc { font-size: 0.82rem; color: var(--text-secondary); margin: 0; }
+
+.card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+.category-tag { font-size: 0.75rem; color: var(--text-muted); background: rgba(255,255,255,0.04); padding: 2px 6px; border-radius: 4px; }
+
+.btn-move {
+  background: transparent;
+  border: none;
+  color: var(--accent-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.btn-move:hover { background: rgba(99, 102, 241, 0.15); }
+.btn-reopen { color: #34d399; }
+.btn-reopen:hover { background: rgba(16, 185, 129, 0.15); }
