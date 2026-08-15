@@ -1,0 +1,71 @@
+<div class="modal-overlay" (click)="onBackdropClick($event)">
+  <div class="modal-card glass-card logs-modal">
+    <!-- Header -->
+    <div class="modal-header">
+      <div class="header-title">
+        <div class="icon-badge">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Security & Authentication Logs</h2>
+          <p>Real-time database audit trail for authentication events</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-sm btn-action" (click)="loadLogs()" title="Refresh logs">
+          ↺ Refresh
+        </button>
+        <button class="btn-icon" (click)="closeModal.emit()" title="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="loading-box">
+      <div class="spinner"></div>
+      <p>Fetching audit logs...</p>
+    </div>
+
+    <div *ngIf="!loading && logs.length === 0" class="empty-logs">
+      <p>No audit logs found.</p>
+    </div>
+
+    <div *ngIf="!loading && logs.length > 0" class="table-responsive">
+      <table class="logs-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Action</th>
+            <th>User Email</th>
+            <th>Status</th>
+            <th>IP Address</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of logs">
+            <td class="date-cell">
+              {{ log.createdAt | date:'MMM d, h:mm:ss a' }}
+            </td>
+            <td>
+              <span class="action-tag">{{ formatAction(log.action) }}</span>
+            </td>
+            <td class="email-cell">{{ log.userEmail }}</td>
+            <td>
+              <span class="status-badge" [class.status-success]="log.status === 'SUCCESS'" [class.status-fail]="log.status === 'FAILURE'">
+                {{ log.status }}
+              </span>
+            </td>
+            <td class="ip-cell">{{ log.ipAddress || '127.0.0.1' }}</td>
+            <td class="details-cell">{{ log.details || '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

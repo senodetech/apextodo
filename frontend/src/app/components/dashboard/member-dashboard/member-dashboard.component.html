@@ -1,0 +1,192 @@
+<div class="member-dashboard">
+  <!-- Personal Key Metrics Cards -->
+  <section class="personal-stats-grid">
+    <div class="stat-card glass-card highlight-assigned" [class.active-card]="taskService.memberScope() === 'assigned'" (click)="onScopeChange('assigned')">
+      <div class="stat-icon-bg icon-assigned">📥</div>
+      <div class="stat-info">
+        <span class="stat-label">Assigned to Me</span>
+        <span class="stat-value text-blue">{{ taskService.stats()?.assignedToMe || 0 }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card glass-card" [class.active-card]="taskService.memberScope() === 'delegated'" (click)="onScopeChange('delegated')">
+      <div class="stat-icon-bg icon-delegated">📤</div>
+      <div class="stat-info">
+        <span class="stat-label">Tasks I Assigned</span>
+        <span class="stat-value text-cyan">{{ taskService.stats()?.delegatedCount || 0 }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card glass-card" [class.active-card]="taskService.memberScope() === 'created'" (click)="onScopeChange('created')">
+      <div class="stat-icon-bg icon-created">✍️</div>
+      <div class="stat-info">
+        <span class="stat-label">Created for Myself</span>
+        <span class="stat-value text-purple">{{ taskService.stats()?.createdByMe || 0 }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card glass-card">
+      <div class="stat-icon-bg icon-completed">✅</div>
+      <div class="stat-info">
+        <span class="stat-label">Completed</span>
+        <span class="stat-value text-green">{{ taskService.stats()?.completed || 0 }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card glass-card">
+      <div class="stat-icon-bg icon-pending">⏳</div>
+      <div class="stat-info">
+        <span class="stat-label">Pending</span>
+        <span class="stat-value text-amber">{{ taskService.stats()?.pending || 0 }}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scope Tabs & Toolbar -->
+  <section class="toolbar-wrapper glass-card">
+    <!-- Separate Scope Tabs: Assigned to Me vs Tasks I Assigned vs Created for Self vs All -->
+    <div class="scope-tabs">
+      <button
+        class="tab-btn"
+        [class.active]="taskService.memberScope() === 'assigned'"
+        (click)="onScopeChange('assigned')"
+      >
+        📥 Tasks Assigned to Me ({{ taskService.stats()?.assignedToMe || 0 }})
+      </button>
+      <button
+        class="tab-btn"
+        [class.active]="taskService.memberScope() === 'delegated'"
+        (click)="onScopeChange('delegated')"
+      >
+        📤 Tasks I Assigned to Others ({{ taskService.stats()?.delegatedCount || 0 }})
+      </button>
+      <button
+        class="tab-btn"
+        [class.active]="taskService.memberScope() === 'created'"
+        (click)="onScopeChange('created')"
+      >
+        ✍️ My Personal Created Tasks ({{ taskService.stats()?.createdByMe || 0 }})
+      </button>
+      <button
+        class="tab-btn"
+        [class.active]="taskService.memberScope() === 'all'"
+        (click)="onScopeChange('all')"
+      >
+        📋 All My Workspace Tasks ({{ taskService.stats()?.total || 0 }})
+      </button>
+    </div>
+
+    <!-- Filter Controls & View Switcher -->
+    <div class="toolbar-controls">
+      <div class="search-input-box">
+        <span>🔍</span>
+        <input
+          type="text"
+          placeholder="Search tasks..."
+          [ngModel]="taskService.filter().search"
+          (ngModelChange)="onSearchChange($event)"
+        />
+      </div>
+
+      <select
+        [ngModel]="taskService.filter().priority"
+        (ngModelChange)="onPriorityChange($event)"
+        class="select-control"
+      >
+        <option value="all">All Priorities</option>
+        <option value="URGENT">Urgent</option>
+        <option value="HIGH">High</option>
+        <option value="MEDIUM">Medium</option>
+        <option value="LOW">Low</option>
+      </select>
+
+      <select
+        [ngModel]="taskService.filter().category"
+        (ngModelChange)="onCategoryChange($event)"
+        class="select-control"
+      >
+        <option value="all">All Categories</option>
+        <option *ngFor="let cat of taskService.categories()" [value]="cat">
+          {{ cat }}
+        </option>
+      </select>
+
+      <!-- View Mode (List vs Kanban) -->
+      <div class="view-toggle-pills">
+        <button
+          class="pill-btn"
+          [class.active]="currentView === 'list'"
+          (click)="currentView = 'list'"
+          title="List View"
+        >
+          ☰
+        </button>
+        <button
+          class="pill-btn"
+          [class.active]="currentView === 'kanban'"
+          (click)="currentView = 'kanban'"
+          title="Kanban View"
+        >
+          ☷
+        </button>
+      </div>
+
+      <button class="btn-add" (click)="openCreateModal.emit()">
+        + New Task
+      </button>
+    </div>
+  </section>
+
+  <!-- Task Content Views (List or Kanban) -->
+  <section class="task-content">
+    <ng-container [ngSwitch]="currentView">
+      <app-task-list
+        *ngSwitchCase="'list'"
+        (openCreateModal)="openCreateModal.emit()"
+        (openEditModal)="openEditModal.emit($event)"
+      ></app-task-list>
+
+      <app-kanban-board
+        *ngSwitchCase="'kanban'"
+        (openEditModal)="openEditModal.emit($event)"
+      ></app-kanban-board>
+    </ng-container>
+
+    <!-- 20 Tasks/Page Pagination Footer -->
+    <div
+      class="pagination-bar glass-card"
+      *ngIf="taskService.totalPages() > 1 || taskService.total() > 0"
+    >
+      <div class="pagination-count">
+        Showing {{ (taskService.page() - 1) * taskService.limit() + (taskService.tasks().length > 0 ? 1 : 0) }} -
+        {{ (taskService.page() - 1) * taskService.limit() + taskService.tasks().length }} of {{ taskService.total() }} tasks (20 per page)
+      </div>
+      <div class="pagination-buttons">
+        <button
+          class="btn-pagination"
+          [disabled]="taskService.page() === 1"
+          (click)="taskService.prevPage()"
+        >
+          ← Prev
+        </button>
+
+        <button
+          *ngFor="let p of getPageNumbers()"
+          class="btn-page-index"
+          [class.active]="p === taskService.page()"
+          (click)="taskService.setPage(p)"
+        >
+          {{ p }}
+        </button>
+
+        <button
+          class="btn-pagination"
+          [disabled]="taskService.page() === taskService.totalPages()"
+          (click)="taskService.nextPage()"
+        >
+          Next →
+        </button>
+      </div>
+    </div>
+  </section>
+</div>

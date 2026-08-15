@@ -1,0 +1,77 @@
+<div class="modal-backdrop" (click)="onBackdropClick($event)">
+  <div class="modal-card glass-modal animate-slide-down">
+    <!-- Header -->
+    <div class="modal-header">
+      <div class="header-title">
+        <div class="icon-bubble">🔔</div>
+        <div>
+          <h3>Super Admin Alert Center</h3>
+          <p class="subtitle">Real-time alerts when Admins manage team members</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button
+          *ngIf="notificationService.unreadCount() > 0"
+          class="btn-text-action"
+          (click)="notificationService.markAllAsRead()"
+        >
+          Mark all as read
+        </button>
+        <button class="btn-close" (click)="closeModal.emit()" aria-label="Close">✕</button>
+      </div>
+    </div>
+
+    <!-- Notification List Body -->
+    <div class="modal-body">
+      <div *ngIf="notificationService.loading()" class="loading-state">
+        <div class="spinner"></div>
+        <span>Loading alerts...</span>
+      </div>
+
+      <div
+        *ngIf="!notificationService.loading() && notificationService.notifications().length === 0"
+        class="empty-state"
+      >
+        <span class="empty-icon">🔕</span>
+        <h4>No activity alerts</h4>
+        <p>You will be notified whenever an Admin creates, updates, or removes a member.</p>
+      </div>
+
+      <div *ngIf="!notificationService.loading()" class="notification-list">
+        <div
+          *ngFor="let item of notificationService.notifications()"
+          class="notification-item glass-item"
+          [class.unread]="!item.isRead"
+          (click)="onItemClick(item)"
+        >
+          <div class="item-icon-wrapper" [ngSwitch]="item.type">
+            <span *ngSwitchCase="'MEMBER_CREATED'" class="type-icon created">👤+</span>
+            <span *ngSwitchCase="'MEMBER_DELETED'" class="type-icon deleted">🗑️</span>
+            <span *ngSwitchCase="'MEMBER_UPDATED'" class="type-icon updated">✏️</span>
+            <span *ngSwitchDefault class="type-icon default">ℹ️</span>
+          </div>
+
+          <div class="item-content">
+            <div class="item-top">
+              <span class="item-title">{{ item.title }}</span>
+              <span class="item-time">{{ item.createdAt | date:'short' }}</span>
+            </div>
+            <p class="item-message">{{ item.message }}</p>
+            <div class="item-meta">
+              <span class="meta-actor">Actor: <strong>{{ item.actorEmail }}</strong></span>
+              <span *ngIf="item.targetEmail" class="meta-target">Target: {{ item.targetEmail }}</span>
+            </div>
+          </div>
+
+          <div *ngIf="!item.isRead" class="unread-dot" title="Unread alert"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer">
+      <span class="footer-info">Showing {{ notificationService.notifications().length }} recent alerts</span>
+      <button class="btn-done" (click)="closeModal.emit()">Close</button>
+    </div>
+  </div>
+</div>
