@@ -23,6 +23,10 @@ export class HeaderComponent {
   taskService = inject(TaskService);
   notificationService = inject(NotificationService);
 
+  openArchitectureDocs() {
+    window.open('/docs/architecture-diagrams.html', '_blank');
+  }
+
   getInitials(name?: string): string {
     if (!name) return 'U';
     return name
