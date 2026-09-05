@@ -1,145 +1,81 @@
 <div class="admin-dashboard">
-  <!-- 10-Widget Executive Command Center Grid -->
+  <!-- 4 Focused, Interactive KPI Filter Cards -->
   <section class="metrics-grid">
-    <!-- Widget 1: Total Tasks & Completion -->
-    <div class="metric-card glass-card">
+    <!-- Card 1: Total System Tasks -->
+    <div
+      class="metric-card glass-card clickable-kpi"
+      [class.active-kpi]="isKpiActive('all')"
+      (click)="selectKpi('all')"
+      title="Click to view all organization tasks"
+    >
       <div class="metric-header">
-        <span class="metric-label">System Tasks</span>
+        <span class="metric-label">Total Tasks</span>
         <span class="metric-icon">📊</span>
       </div>
       <div class="metric-value">{{ taskService.stats()?.total || 0 }}</div>
-      <div class="metric-progress-wrapper">
-        <div class="progress-bar-bg">
-          <div
-            class="progress-bar-fill"
-            [style.width.%]="taskService.stats()?.completionRate || 0"
-          ></div>
-        </div>
-        <span class="progress-text">{{ taskService.stats()?.completionRate || 0 }}% completed</span>
-      </div>
-    </div>
-
-    <!-- Widget 2: Active Team Size -->
-    <div class="metric-card glass-card">
-      <div class="metric-header">
-        <span class="metric-label">Team Members</span>
-        <span class="metric-icon">👥</span>
-      </div>
-      <div class="metric-value">{{ taskService.stats()?.activeUsersCount || 0 }}</div>
       <div class="metric-subtext">
-        <span class="badge-sub admin">{{ taskService.stats()?.adminsCount || 0 }} Admins</span>
-        <span class="badge-sub member">{{ taskService.stats()?.membersCount || 0 }} Members</span>
+        <span class="kpi-tag">Show All</span>
+        <span class="separator">•</span>
+        <span>{{ taskService.stats()?.activeUsersCount || 1 }} team members</span>
       </div>
     </div>
 
-    <!-- Widget 3: Critical & Urgent Focus -->
-    <div class="metric-card glass-card urgent-highlight">
+    <!-- Card 2: Active Backlog -->
+    <div
+      class="metric-card glass-card clickable-kpi"
+      [class.active-kpi]="isKpiActive('active')"
+      (click)="selectKpi('active')"
+      title="Click to filter active/pending tasks"
+    >
       <div class="metric-header">
-        <span class="metric-label">Critical Action Items</span>
+        <span class="metric-label">Active Backlog</span>
+        <span class="metric-icon">⚡</span>
+      </div>
+      <div class="metric-value text-amber">{{ taskService.stats()?.pending || 0 }}</div>
+      <div class="metric-subtext">
+        <span class="text-success">{{ taskService.stats()?.assignedCount || 0 }} assigned</span>
+        <span class="separator">•</span>
+        <span class="text-muted">{{ taskService.stats()?.unassignedCount || 0 }} unassigned</span>
+      </div>
+    </div>
+
+    <!-- Card 3: Urgent & Critical -->
+    <div
+      class="metric-card glass-card clickable-kpi urgent-highlight"
+      [class.active-kpi]="isKpiActive('urgent')"
+      [class.has-critical]="(taskService.stats()?.urgentHighCount || 0) > 0"
+      (click)="selectKpi('urgent')"
+      title="Click to filter critical & high priority tasks"
+    >
+      <div class="metric-header">
+        <span class="metric-label">Urgent Focus</span>
         <span class="metric-icon">🚨</span>
       </div>
       <div class="metric-value critical-val">{{ taskService.stats()?.urgentHighCount || 0 }}</div>
-      <div class="metric-subtext warning">Urgent / High Priority Pending</div>
-    </div>
-
-    <!-- Widget 4: Task Assignment Distribution -->
-    <div class="metric-card glass-card">
-      <div class="metric-header">
-        <span class="metric-label">Task Assignment</span>
-        <span class="metric-icon">📌</span>
-      </div>
-      <div class="metric-value">{{ taskService.stats()?.assignedCount || 0 }}</div>
       <div class="metric-subtext">
-        <span class="text-success">{{ taskService.stats()?.assignedCount || 0 }} Assigned</span>
-        <span class="separator">•</span>
-        <span class="text-muted">{{ taskService.stats()?.unassignedCount || 0 }} Unassigned</span>
-      </div>
-    </div>
-
-    <!-- Widget 5: Category Diversity -->
-    <div class="metric-card glass-card">
-      <div class="metric-header">
-        <span class="metric-label">Top Categories</span>
-        <span class="metric-icon">🏷️</span>
-      </div>
-      <div class="category-pills-list">
-        <span
-          *ngFor="let cat of getTopCategories()"
-          class="cat-badge"
-        >
-          {{ cat.name }}: <strong>{{ cat.count }}</strong>
+        <span *ngIf="(taskService.stats()?.overdueCount || 0) > 0" class="text-danger font-bold">
+          {{ taskService.stats()?.overdueCount }} Overdue!
+        </span>
+        <span *ngIf="(taskService.stats()?.overdueCount || 0) === 0" class="text-amber">
+          High & Urgent pending
         </span>
       </div>
     </div>
 
-    <!-- Widget 6: Security & Audit Health -->
-    <div class="metric-card glass-card">
+    <!-- Card 4: Resolved / Completed -->
+    <div
+      class="metric-card glass-card clickable-kpi"
+      [class.active-kpi]="isKpiActive('completed')"
+      (click)="selectKpi('completed')"
+      title="Click to filter completed tasks"
+    >
       <div class="metric-header">
-        <span class="metric-label">Security Audit Logs</span>
-        <span class="metric-icon">🛡️</span>
-      </div>
-      <div class="metric-value">{{ taskService.stats()?.securityLogsCount || 0 }}</div>
-      <div class="metric-subtext text-info">
-        <span class="status-live-dot"></span> PostgreSQL Audit Active
-      </div>
-    </div>
-
-    <!-- Widget 7: Deadline Tracker (Overdue & Due Soon) -->
-    <div class="metric-card glass-card" [class.overdue-alert]="(taskService.stats()?.overdueCount || 0) > 0">
-      <div class="metric-header">
-        <span class="metric-label">Deadline Tracker</span>
-        <span class="metric-icon">⏱️</span>
-      </div>
-      <div class="metric-value" [class.text-danger]="(taskService.stats()?.overdueCount || 0) > 0">
-        {{ taskService.stats()?.overdueCount || 0 }} <span class="metric-unit">Overdue</span>
-      </div>
-      <div class="metric-subtext">
-        <span class="text-amber">{{ taskService.stats()?.dueSoonCount || 0 }} Due in 48 hrs</span>
-      </div>
-    </div>
-
-    <!-- Widget 8: Weekly Velocity -->
-    <div class="metric-card glass-card">
-      <div class="metric-header">
-        <span class="metric-label">Weekly Velocity</span>
-        <span class="metric-icon">⚡</span>
-      </div>
-      <div class="metric-value text-purple">+{{ taskService.stats()?.createdThisWeekCount || 0 }}</div>
-      <div class="metric-subtext">
-        <span class="text-success">↑ Active Pace</span>
-        <span class="separator">•</span>
-        <span>Last 7 Days</span>
-      </div>
-    </div>
-
-    <!-- Widget 9: Top Workload Contributor -->
-    <div class="metric-card glass-card">
-      <div class="metric-header">
-        <span class="metric-label">Workload Leader</span>
-        <span class="metric-icon">🎯</span>
-      </div>
-      <div class="metric-value leader-name">
-        {{ taskService.stats()?.topAssignee?.name || 'Evenly Distributed' }}
-      </div>
-      <div class="metric-subtext">
-        <span *ngIf="taskService.stats()?.topAssignee" class="text-info">
-          {{ taskService.stats()?.topAssignee?.activeAssigned || 0 }} active tasks assigned
-        </span>
-        <span *ngIf="!taskService.stats()?.topAssignee" class="text-muted">
-          No tasks currently assigned
-        </span>
-      </div>
-    </div>
-
-    <!-- Widget 10: Completed Tasks Output -->
-    <div class="metric-card glass-card">
-      <div class="metric-header">
-        <span class="metric-label">Resolved Milestones</span>
-        <span class="metric-icon">🏆</span>
+        <span class="metric-label">Completed</span>
+        <span class="metric-icon">✅</span>
       </div>
       <div class="metric-value text-green">{{ taskService.stats()?.completed || 0 }}</div>
       <div class="metric-subtext">
-        <span class="text-amber">{{ taskService.stats()?.pending || 0 }} in active backlog</span>
+        <span class="text-success">{{ taskService.stats()?.completionRate || 0 }}% completion rate</span>
       </div>
     </div>
   </section>
@@ -151,7 +87,7 @@
         <span class="search-icon">🔍</span>
         <input
           type="text"
-          placeholder="Search tasks across company..."
+          placeholder="Search tasks..."
           [ngModel]="taskService.filter().search"
           (ngModelChange)="onSearchChange($event)"
         />
@@ -164,10 +100,10 @@
           class="custom-select"
         >
           <option value="all">All Priorities</option>
-          <option value="URGENT">Urgent</option>
-          <option value="HIGH">High</option>
-          <option value="MEDIUM">Medium</option>
-          <option value="LOW">Low</option>
+          <option value="URGENT">🚨 Urgent</option>
+          <option value="HIGH">⚡ High</option>
+          <option value="MEDIUM">🔹 Medium</option>
+          <option value="LOW">◽ Low</option>
         </select>
 
         <select
@@ -190,6 +126,16 @@
           <option value="active">Active Only</option>
           <option value="completed">Completed Only</option>
         </select>
+
+        <!-- Active Filter Indicator & Quick Reset -->
+        <button
+          *ngIf="hasActiveFilters()"
+          class="btn-reset-filters"
+          (click)="resetAllFilters()"
+          title="Clear all active filters"
+        >
+          ✕ Clear Filters
+        </button>
       </div>
     </div>
 

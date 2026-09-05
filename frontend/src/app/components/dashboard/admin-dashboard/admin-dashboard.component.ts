@@ -33,6 +33,49 @@ export class AdminDashboardComponent {
     this.taskService.setFilter({ completed });
   }
 
+  selectKpi(type: 'all' | 'active' | 'urgent' | 'completed') {
+    if (type === 'all') {
+      this.taskService.setFilter({ completed: 'all', priority: 'all' });
+    } else if (type === 'active') {
+      this.taskService.setFilter({ completed: 'active', priority: 'all' });
+    } else if (type === 'urgent') {
+      this.taskService.setFilter({ priority: 'URGENT', completed: 'active' });
+    } else if (type === 'completed') {
+      this.taskService.setFilter({ completed: 'completed', priority: 'all' });
+    }
+  }
+
+  isKpiActive(type: 'all' | 'active' | 'urgent' | 'completed'): boolean {
+    const f = this.taskService.filter();
+    if (type === 'all') {
+      return f.completed === 'all' && (!f.priority || f.priority === 'all');
+    }
+    if (type === 'active') {
+      return f.completed === 'active' && (!f.priority || f.priority === 'all');
+    }
+    if (type === 'urgent') {
+      return f.priority === 'URGENT';
+    }
+    if (type === 'completed') {
+      return f.completed === 'completed';
+    }
+    return false;
+  }
+
+  hasActiveFilters(): boolean {
+    const f = this.taskService.filter();
+    return !!(f.search || (f.priority && f.priority !== 'all') || (f.category && f.category !== 'all') || (f.completed && f.completed !== 'all'));
+  }
+
+  resetAllFilters() {
+    this.taskService.setFilter({
+      search: '',
+      priority: 'all',
+      category: 'all',
+      completed: 'all'
+    });
+  }
+
   getTopCategories(): { name: string; count: number }[] {
     const cats = this.taskService.stats()?.categories || {};
     return Object.entries(cats)
