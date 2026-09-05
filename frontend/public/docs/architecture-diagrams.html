@@ -149,7 +149,7 @@
     .section-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
@@ -167,10 +167,10 @@
       background: none;
       border: none;
       color: #94a3b8;
-      width: 32px;
-      height: 32px;
+      width: 30px;
+      height: 30px;
       border-radius: 6px;
-      font-size: 1rem;
+      font-size: 0.95rem;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -187,8 +187,8 @@
       font-size: 0.78rem;
       font-weight: 600;
       color: #cbd5e1;
-      padding: 0 8px;
-      min-width: 48px;
+      padding: 0 6px;
+      min-width: 44px;
       text-align: center;
       font-family: 'JetBrains Mono', monospace;
     }
@@ -200,7 +200,7 @@
       background: rgba(99, 102, 241, 0.15);
       border: 1px solid rgba(99, 102, 241, 0.35);
       color: #a5b4fc;
-      padding: 7px 14px;
+      padding: 6px 12px;
       border-radius: 8px;
       font-size: 0.82rem;
       font-weight: 600;
@@ -214,14 +214,35 @@
       transform: translateY(-1px);
     }
 
+    .btn-fullscreen {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34d399;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-fullscreen:hover {
+      background: rgba(16, 185, 129, 0.28);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
     .btn-download {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
       color: #fff;
       border: none;
-      padding: 7px 14px;
+      padding: 6px 12px;
       border-radius: 8px;
       font-size: 0.82rem;
       font-weight: 600;
@@ -233,6 +254,27 @@
     .btn-download:hover {
       transform: translateY(-1px);
       box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+    }
+
+    .btn-download-png {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #e2e8f0;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-download-png:hover {
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+      transform: translateY(-1px);
     }
 
     .mermaid-container {
@@ -248,6 +290,22 @@
       position: relative;
       cursor: grab;
       user-select: none;
+    }
+
+    .mermaid-container:fullscreen {
+      background: #090d16;
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mermaid-container:-webkit-full-screen {
+      background: #090d16;
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .mermaid-container.is-panning {
@@ -425,11 +483,17 @@
             <button class="btn-zoom" onclick="zoomDiagram('svg-diagram-1', 0.2)" title="Zoom In (+)">+</button>
             <button class="btn-zoom" onclick="resetDiagram('svg-diagram-1')" title="Reset Zoom">⟲</button>
           </div>
-          <button class="btn-action-primary" onclick="openLightbox('svg-diagram-1', '1. Full-Stack System Architecture Blueprint')">
-            🔍 Magnify Fullscreen
+          <button class="btn-fullscreen" onclick="toggleFullscreen('svg-diagram-1')" title="True Fullscreen Mode (F)">
+            ⛶ Fullscreen
           </button>
-          <button class="btn-download" onclick="downloadSVG('svg-diagram-1', '01-apextodo-full-system-architecture.svg')">
+          <button class="btn-action-primary" onclick="openLightbox('svg-diagram-1', '1. Full-Stack System Architecture Blueprint')">
+            🔍 Magnifier
+          </button>
+          <button class="btn-download" onclick="downloadSVG('svg-diagram-1', '01-apextodo-full-system-architecture.svg')" title="Download Scalable Vector Graphic">
             📥 SVG
+          </button>
+          <button class="btn-download-png" onclick="downloadPNG('svg-diagram-1', '01-apextodo-full-system-architecture.png')" title="Export High-Resolution PNG Image">
+            🖼️ PNG
           </button>
         </div>
       </div>
@@ -529,7 +593,7 @@ flowchart TB
     DATA_LAYER --> DB_LAYER
           </div>
         </div>
-        <div class="pan-zoom-hint">🖱️ Scroll to zoom • Drag to pan • Double-click to magnify</div>
+        <div class="pan-zoom-hint">🖱️ Scroll to zoom • Drag to pan • ⛶ Fullscreen (F)</div>
       </div>
     </section>
 
@@ -547,11 +611,17 @@ flowchart TB
             <button class="btn-zoom" onclick="zoomDiagram('svg-diagram-2', 0.2)">+</button>
             <button class="btn-zoom" onclick="resetDiagram('svg-diagram-2')">⟲</button>
           </div>
+          <button class="btn-fullscreen" onclick="toggleFullscreen('svg-diagram-2')" title="True Fullscreen Mode (F)">
+            ⛶ Fullscreen
+          </button>
           <button class="btn-action-primary" onclick="openLightbox('svg-diagram-2', '2. Frontend Bootstrapping & Route Resolution Flow')">
-            🔍 Magnify Fullscreen
+            🔍 Magnifier
           </button>
           <button class="btn-download" onclick="downloadSVG('svg-diagram-2', '02-frontend-bootstrapping-flow.svg')">
             📥 SVG
+          </button>
+          <button class="btn-download-png" onclick="downloadPNG('svg-diagram-2', '02-frontend-bootstrapping-flow.png')">
+            🖼️ PNG
           </button>
         </div>
       </div>
@@ -584,7 +654,7 @@ sequenceDiagram
     end
           </div>
         </div>
-        <div class="pan-zoom-hint">🖱️ Scroll to zoom • Drag to pan • Double-click to magnify</div>
+        <div class="pan-zoom-hint">🖱️ Scroll to zoom • Drag to pan • ⛶ Fullscreen (F)</div>
       </div>
     </section>
 
@@ -602,11 +672,17 @@ sequenceDiagram
             <button class="btn-zoom" onclick="zoomDiagram('svg-diagram-3', 0.2)">+</button>
             <button class="btn-zoom" onclick="resetDiagram('svg-diagram-3')">⟲</button>
           </div>
+          <button class="btn-fullscreen" onclick="toggleFullscreen('svg-diagram-3')" title="True Fullscreen Mode (F)">
+            ⛶ Fullscreen
+          </button>
           <button class="btn-action-primary" onclick="openLightbox('svg-diagram-3', '3. Dashboard Component & Scoping Hierarchy')">
-            🔍 Magnify Fullscreen
+            🔍 Magnifier
           </button>
           <button class="btn-download" onclick="downloadSVG('svg-diagram-3', '03-dashboard-component-hierarchy.svg')">
             📥 SVG
+          </button>
+          <button class="btn-download-png" onclick="downloadPNG('svg-diagram-3', '03-dashboard-component-hierarchy.png')">
+            🖼️ PNG
           </button>
         </div>
       </div>
@@ -633,7 +709,7 @@ flowchart TD
     VIEWS -->|Kanban View| KB[KanbanBoardComponent]
           </div>
         </div>
-        <div class="pan-zoom-hint">🖱️ Scroll to zoom • Drag to pan • Double-click to magnify</div>
+        <div class="pan-zoom-hint">🖱️ Scroll to zoom • Drag to pan • ⛶ Fullscreen (F)</div>
       </div>
     </section>
 
@@ -651,11 +727,17 @@ flowchart TD
             <button class="btn-zoom" onclick="zoomDiagram('svg-diagram-4', 0.2)">+</button>
             <button class="btn-zoom" onclick="resetDiagram('svg-diagram-4')">⟲</button>
           </div>
+          <button class="btn-fullscreen" onclick="toggleFullscreen('svg-diagram-4')" title="True Fullscreen Mode (F)">
+            ⛶ Fullscreen
+          </button>
           <button class="btn-action-primary" onclick="openLightbox('svg-diagram-4', '4. End-to-End Request & Auto-Refresh Flow')">
-            🔍 Magnify Fullscreen
+            🔍 Magnifier
           </button>
           <button class="btn-download" onclick="downloadSVG('svg-diagram-4', '04-e2e-request-refresh-sequence.svg')">
             📥 SVG
+          </button>
+          <button class="btn-download-png" onclick="downloadPNG('svg-diagram-4', '04-e2e-request-refresh-sequence.png')">
+            🖼️ PNG
           </button>
         </div>
       </div>
@@ -702,7 +784,7 @@ sequenceDiagram
     end
           </div>
         </div>
-        <div class="pan-zoom-hint">🖱️ Scroll to zoom • Drag to pan • Double-click to magnify</div>
+        <div class="pan-zoom-hint">🖱️ Scroll to zoom • Drag to pan • ⛶ Fullscreen (F)</div>
       </div>
     </section>
 
@@ -720,11 +802,17 @@ sequenceDiagram
             <button class="btn-zoom" onclick="zoomDiagram('svg-diagram-5', 0.2)">+</button>
             <button class="btn-zoom" onclick="resetDiagram('svg-diagram-5')">⟲</button>
           </div>
+          <button class="btn-fullscreen" onclick="toggleFullscreen('svg-diagram-5')" title="True Fullscreen Mode (F)">
+            ⛶ Fullscreen
+          </button>
           <button class="btn-action-primary" onclick="openLightbox('svg-diagram-5', '5. Backend Security & Interception Pipeline')">
-            🔍 Magnify Fullscreen
+            🔍 Magnifier
           </button>
           <button class="btn-download" onclick="downloadSVG('svg-diagram-5', '05-backend-security-pipeline.svg')">
             📥 SVG
+          </button>
+          <button class="btn-download-png" onclick="downloadPNG('svg-diagram-5', '05-backend-security-pipeline.png')">
+            🖼️ PNG
           </button>
         </div>
       </div>
@@ -744,7 +832,7 @@ flowchart LR
     REPO --> PG[(PostgreSQL Database)]
           </div>
         </div>
-        <div class="pan-zoom-hint">🖱️ Scroll to zoom • Drag to pan • Double-click to magnify</div>
+        <div class="pan-zoom-hint">🖱️ Scroll to zoom • Drag to pan • ⛶ Fullscreen (F)</div>
       </div>
     </section>
 
@@ -764,6 +852,15 @@ flowchart LR
           <button class="btn-zoom" onclick="zoomLightbox(0.25)" title="Zoom In (+)">+</button>
           <button class="btn-zoom" onclick="resetLightbox()" title="Reset (100%)">⟲</button>
         </div>
+        <button class="btn-fullscreen" onclick="toggleFullscreen('modal-lightbox')" title="True Fullscreen (F)">
+          ⛶ Fullscreen
+        </button>
+        <button class="btn-download" onclick="downloadLightboxSVG()" title="Download SVG">
+          📥 SVG
+        </button>
+        <button class="btn-download-png" onclick="downloadLightboxPNG()" title="Export PNG">
+          🖼️ PNG
+        </button>
         <button class="btn-close-lightbox" onclick="closeLightbox()" title="Close Magnifier (Esc)">✕</button>
       </div>
     </div>
@@ -959,21 +1056,57 @@ flowchart LR
       }
     });
 
-    // Keyboard Shortcuts for Lightbox
+    // Keyboard Shortcuts for Lightbox & Fullscreen
     window.addEventListener('keydown', (e) => {
       const modal = document.getElementById('modal-lightbox');
-      if (!modal.classList.contains('active')) return;
+      const isLightboxOpen = modal.classList.contains('active');
 
-      if (e.key === 'Escape') closeLightbox();
-      if (e.key === '+' || e.key === '=') zoomLightbox(0.25);
-      if (e.key === '-' || e.key === '_') zoomLightbox(-0.25);
-      if (e.key === '0') resetLightbox();
+      if (e.key === 'Escape' && isLightboxOpen) closeLightbox();
+      if (isLightboxOpen) {
+        if (e.key === '+' || e.key === '=') zoomLightbox(0.25);
+        if (e.key === '-' || e.key === '_') zoomLightbox(-0.25);
+        if (e.key === '0') resetLightbox();
+      }
+
+      // 'f' or 'F' key toggles Fullscreen
+      if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && e.target.tagName !== 'INPUT') {
+        e.preventDefault();
+        if (isLightboxOpen) {
+          toggleFullscreen('modal-lightbox');
+        } else {
+          toggleFullscreen(document.documentElement);
+        }
+      }
     });
+
+    // Toggle True OS / Browser Fullscreen Mode
+    function toggleFullscreen(elementIdOrEl) {
+      let el = typeof elementIdOrEl === 'string' ? document.getElementById(elementIdOrEl) : elementIdOrEl;
+      if (!el) el = document.documentElement;
+
+      if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+        if (el.requestFullscreen) {
+          el.requestFullscreen();
+        } else if (el.webkitRequestFullscreen) {
+          el.webkitRequestFullscreen();
+        } else if (el.msRequestFullscreen) {
+          el.msRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      }
+    }
 
     // Helper to download rendered vector SVG
     function downloadSVG(containerId, fileName) {
       const container = document.getElementById(containerId);
-      const svg = container.querySelector('svg');
+      const svg = container ? container.querySelector('svg') : null;
       if (!svg) {
         alert('Diagram is still rendering, please try again in a second.');
         return;
@@ -985,11 +1118,62 @@ flowchart LR
       
       const downloadLink = document.createElement('a');
       downloadLink.href = svgUrl;
-      downloadLink.download = fileName;
+      downloadLink.download = fileName || 'diagram.svg';
       document.body.appendChild(downloadLink);
       downloadLink.click();
       document.body.removeChild(downloadLink);
       URL.revokeObjectURL(svgUrl);
+    }
+
+    // High-Resolution 2x PNG Exporter
+    function downloadPNG(containerId, fileName) {
+      const container = document.getElementById(containerId);
+      const svg = container ? container.querySelector('svg') : null;
+      if (!svg) {
+        alert('Diagram is still rendering, please try again in a second.');
+        return;
+      }
+
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const blobURL = URL.createObjectURL(svgBlob);
+
+      const image = new Image();
+      image.onload = () => {
+        const scaleFactor = 2; // 2x Retina resolution
+        const canvas = document.createElement('canvas');
+        const width = (svg.clientWidth || image.naturalWidth || 1200);
+        const height = (svg.clientHeight || image.naturalHeight || 800);
+        canvas.width = width * scaleFactor;
+        canvas.height = height * scaleFactor;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#090d16'; // Match dark theme
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        const pngURL = canvas.toDataURL('image/png');
+        const downloadLink = document.createElement('a');
+        downloadLink.href = pngURL;
+        downloadLink.download = fileName || 'diagram.png';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(blobURL);
+      };
+      image.src = blobURL;
+    }
+
+    // Lightbox SVG / PNG Exporters
+    function downloadLightboxSVG() {
+      const title = document.getElementById('lightbox-title').textContent.trim();
+      const sanitized = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      downloadSVG('lightbox-viewport', `${sanitized}.svg`);
+    }
+
+    function downloadLightboxPNG() {
+      const title = document.getElementById('lightbox-title').textContent.trim();
+      const sanitized = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      downloadPNG('lightbox-viewport', `${sanitized}.png`);
     }
   </script>
 </body>
