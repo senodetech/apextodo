@@ -10,6 +10,9 @@ export interface User {
   email: string;
   role: UserRole;
   isActive: boolean;
+  avatarUrl?: string;
+  authProvider?: 'LOCAL' | 'GOOGLE' | 'HYBRID';
+  googleId?: string;
   taskCount?: number;
   createdAt: string;
   updatedAt: string;

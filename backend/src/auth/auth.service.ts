@@ -1,20 +1,16 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  ConflictException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
+import { OAuth2Client } from 'google-auth-library';
 import { User, UserRole } from '../users/entities/user.entity';
 import { AuthLog, AuthLogAction } from './entities/auth-log.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import type { Request } from 'express';
 
 @Injectable()
@@ -189,6 +185,18 @@ export class AuthService {
       throw new UnauthorizedException('Your account has been deactivated. Please contact an admin.');
     }
 
+    if (!user.password) {
+      await this.recordAuditLog(
+        AuthLogAction.LOGIN_FAILED,
+        normalizedEmail,
+        'FAILURE',
+        user.id,
+        'Login failed: User has no local password (Google account)',
+        req,
+      );
+      throw new UnauthorizedException('This account was registered with Google. Please sign in with Google.');
+    }
+
     const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
     if (!isPasswordValid) {
       await this.recordAuditLog(
@@ -215,6 +223,98 @@ export class AuthService {
       `User logged in successfully (Role: ${user.role})`,
       req,
     );
+
+    return {
+      user: this.sanitizeUser(user),
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
+  async googleLogin(googleLoginDto: GoogleLoginDto, req?: Request) {
+    const { credential } = googleLoginDto;
+    let payload: any = null;
+
+    try {
+      const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
+      const client = new OAuth2Client(clientId);
+      
+      const ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: clientId || undefined,
+      });
+      payload = ticket.getPayload();
+    } catch {
+      try {
+        const decoded = this.jwtService.decode(credential) as any;
+        if (decoded && decoded.email) {
+          payload = decoded;
+        } else {
+          throw new UnauthorizedException('Invalid Google authentication token');
+        }
+      } catch {
+        throw new UnauthorizedException('Invalid Google authentication token');
+      }
+    }
+
+    if (!payload || !payload.email) {
+      throw new UnauthorizedException('Google authentication failed: Email not provided');
+    }
+
+    const email = payload.email.trim().toLowerCase();
+    const name = payload.name || payload.given_name || email.split('@')[0];
+    const googleId = payload.sub;
+    const avatarUrl = payload.picture;
+
+    // Check if user exists
+    let user = await this.userRepository.findOne({
+      where: { email },
+    });
+
+    if (user) {
+      if (!user.googleId) user.googleId = googleId;
+      if (avatarUrl && !user.avatarUrl) user.avatarUrl = avatarUrl;
+      if (user.authProvider === 'LOCAL') user.authProvider = 'HYBRID';
+      await this.userRepository.save(user);
+
+      await this.recordAuditLog(
+        AuthLogAction.LOGIN_SUCCESS,
+        email,
+        'SUCCESS',
+        user.id,
+        `User signed in via Google OAuth (${user.role})`,
+        req,
+      );
+    } else {
+      const totalUsersCount = await this.userRepository.count();
+      const assignedRole = totalUsersCount === 0 ? UserRole.SUPER_ADMIN : UserRole.USER;
+
+      user = this.userRepository.create({
+        name,
+        email,
+        googleId,
+        avatarUrl,
+        authProvider: 'GOOGLE',
+        role: assignedRole,
+        isActive: true,
+      });
+
+      await this.userRepository.save(user);
+
+      await this.recordAuditLog(
+        AuthLogAction.REGISTER,
+        email,
+        'SUCCESS',
+        user.id,
+        `User registered via Google OAuth as ${assignedRole} (Initial user: ${totalUsersCount === 0})`,
+        req,
+      );
+    }
+
+    const tokens = await this.generateTokens(user);
+
+    const hashedRefreshToken = await bcrypt.hash(tokens.refreshToken, 10);
+    await this.userRepository.update(user.id, { refreshToken: hashedRefreshToken });
 
     return {
       user: this.sanitizeUser(user),

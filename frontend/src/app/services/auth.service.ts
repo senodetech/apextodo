@@ -105,6 +105,24 @@ export class AuthService {
     );
   }
 
+  loginWithGoogle(credential: string): Observable<AuthResponse> {
+    this.loading.set(true);
+    this.error.set(null);
+
+    return this.http.post<AuthResponse>(`${this.API_URL}/google`, { credential }).pipe(
+      tap((res) => {
+        this.handleAuthSuccess(res);
+        this.loading.set(false);
+      }),
+      catchError((err) => {
+        this.loading.set(false);
+        const msg = err.error?.message || 'Google sign-in failed. Please try again.';
+        this.error.set(Array.isArray(msg) ? msg.join(', ') : msg);
+        return throwError(() => err);
+      }),
+    );
+  }
+
   refreshSession(): Observable<AuthResponse> {
     const currentRefreshToken = this.refreshToken();
     if (!currentRefreshToken) {

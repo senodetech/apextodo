@@ -88,7 +88,16 @@
         [class.avatar-super]="authService.isSuperAdmin()"
         [title]="authService.currentUser()?.email || 'User'"
       >
-        {{ getInitials(authService.currentUser()?.name) }}
+        <img
+          *ngIf="authService.currentUser()?.avatarUrl; else initials"
+          [src]="authService.currentUser()?.avatarUrl"
+          alt="Avatar"
+          class="avatar-img"
+          referrerpolicy="no-referrer"
+        />
+        <ng-template #initials>
+          {{ getInitials(authService.currentUser()?.name) }}
+        </ng-template>
       </div>
       <div class="user-meta">
         <span class="user-display-name">{{ authService.currentUser()?.name }}</span>

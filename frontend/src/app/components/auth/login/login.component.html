@@ -25,6 +25,16 @@
         <span>{{ authService.error() }}</span>
       </div>
 
+      <!-- Google 1-Click Sign-In Container -->
+      <div class="google-auth-wrapper">
+        <div #googleBtn class="google-btn-slot"></div>
+      </div>
+
+      <!-- Divider -->
+      <div class="auth-divider">
+        <span>or sign in with email</span>
+      </div>
+
       <form (ngSubmit)="onSubmit()" class="auth-form">
         <!-- Email -->
         <div class="form-group">
