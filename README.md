@@ -1,6 +1,30 @@
-# ApexTasks
+# ApexTasks — Next-Gen Workspace & Agile Kanban
 
-ApexTasks is a full-stack task management web application designed for organizing, tracking, and prioritizing work items. The project is structured as a monorepo containing an Angular 19 frontend application and a NestJS RESTful backend API powered by PostgreSQL.
+<div align="center">
+
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Vercel_Production-black?style=for-the-badge&logo=vercel)](https://apextodo-oxtlpkjvv-senodetech.vercel.app)
+[![Angular](https://img.shields.io/badge/Angular-19_Signals-DD0031?style=for-the-badge&logo=angular)](https://angular.dev)
+[![NestJS](https://img.shields.io/badge/NestJS-11_API-E0234E?style=for-the-badge&logo=nestjs)](https://nestjs.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-TypeORM-4169E1?style=for-the-badge&logo=postgresql)](https://postgresql.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+
+**[🌐 Visit Live Application](https://apextodo-oxtlpkjvv-senodetech.vercel.app)** • **[🏛️ Interactive Architecture Blueprints](https://apextodo-oxtlpkjvv-senodetech.vercel.app/docs/architecture-diagrams.html)**
+
+</div>
+
+---
+
+ApexTasks is a high-performance, enterprise-grade task management web application and MicroSaaS designed for organizing, prioritizing, and executing work items with sub-50ms latency. The project is built with an Angular 19 frontend utilizing reactive Signals and a NestJS 11 backend API backed by PostgreSQL.
+
+---
+
+## 🌟 Key Features
+
+* **⚡ Sub-50ms Performance**: Ultra-fast state management powered by Angular Signals (`signal`, `computed`).
+* **🎨 Fluid Glassmorphic UI**: Custom dark-mode design system with responsive grid and smooth Kanban drag-and-drop transitions.
+* **📊 Dual Persona Dashboard**: Instant switching between **Executive Organizational Analytics** and **Personal Distraction-Free Workspace**.
+* **🛡️ Enterprise Security**: Granular Role-Based Access Control (`SUPER_ADMIN`, `ADMIN`, `USER`), JWT token rotation, and immutable audit logs.
+* **🏛️ Interactive Architecture Blueprints**: Built-in architecture viewer and magnifier to explore database models, API gateways, and component structures.
 
 ---
 
