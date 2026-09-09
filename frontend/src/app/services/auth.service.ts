@@ -10,6 +10,7 @@ import {
   RegisterInput,
 } from '../models/user.model';
 import { environment } from '../../environments/environment';
+import { ToastService } from './toast.service';
 
 @Injectable({
   providedIn: 'root',
@@ -17,6 +18,7 @@ import { environment } from '../../environments/environment';
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private toastService = inject(ToastService);
 
   private readonly API_URL = `${environment.apiUrl}/auth`;
   private readonly ACCESS_TOKEN_KEY = 'apex_access_token';
@@ -75,7 +77,7 @@ export class AuthService {
 
     return this.http.post<AuthResponse>(`${this.API_URL}/register`, input).pipe(
       tap((res) => {
-        this.handleAuthSuccess(res);
+        this.handleAuthSuccess(res, true);
         this.loading.set(false);
       }),
       catchError((err) => {
@@ -93,7 +95,7 @@ export class AuthService {
 
     return this.http.post<AuthResponse>(`${this.API_URL}/login`, input).pipe(
       tap((res) => {
-        this.handleAuthSuccess(res);
+        this.handleAuthSuccess(res, true);
         this.loading.set(false);
       }),
       catchError((err) => {
@@ -111,7 +113,7 @@ export class AuthService {
 
     return this.http.post<AuthResponse>(`${this.API_URL}/demo-login`, { role }).pipe(
       tap((res) => {
-        this.handleAuthSuccess(res);
+        this.handleAuthSuccess(res, true);
         this.loading.set(false);
       }),
       catchError((err) => {
@@ -126,16 +128,16 @@ export class AuthService {
   refreshSession(): Observable<AuthResponse> {
     const currentRefreshToken = this.refreshToken();
     if (!currentRefreshToken) {
-      this.clearSession();
+      this.clearSession('expired');
       return throwError(() => new Error('No refresh token available'));
     }
 
     return this.http
       .post<AuthResponse>(`${this.API_URL}/refresh`, { refreshToken: currentRefreshToken })
       .pipe(
-        tap((res) => this.handleAuthSuccess(res)),
+        tap((res) => this.handleAuthSuccess(res, false)),
         catchError((err) => {
-          this.clearSession();
+          this.clearSession('expired');
           return throwError(() => err);
         }),
       );
@@ -143,12 +145,12 @@ export class AuthService {
 
   logout() {
     this.http.post(`${this.API_URL}/logout`, {}).subscribe({
-      next: () => this.clearSession(),
-      error: () => this.clearSession(),
+      next: () => this.clearSession('logout'),
+      error: () => this.clearSession('logout'),
     });
   }
 
-  private handleAuthSuccess(res: AuthResponse) {
+  private handleAuthSuccess(res: AuthResponse, showWelcomeToast = false) {
     this.accessToken.set(res.accessToken);
     this.refreshToken.set(res.refreshToken);
     this.currentUser.set(res.user);
@@ -157,9 +159,13 @@ export class AuthService {
     localStorage.setItem(this.REFRESH_TOKEN_KEY, res.refreshToken);
     localStorage.setItem(this.USER_KEY, JSON.stringify(res.user));
     this.error.set(null);
+
+    if (showWelcomeToast) {
+      this.toastService.success('You logged in successfully', `Welcome, ${res.user.name}`);
+    }
   }
 
-  clearSession() {
+  clearSession(reason?: string) {
     this.accessToken.set(null);
     this.refreshToken.set(null);
     this.currentUser.set(null);
@@ -168,16 +174,22 @@ export class AuthService {
     localStorage.removeItem(this.REFRESH_TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
 
+    if (reason === 'expired') {
+      this.toastService.error('Unfortunately, your session has expired. Please log in again.', 'Session Timeout');
+    } else if (reason === 'logout') {
+      this.toastService.info('You are logged out successfully', 'Signed Out');
+    }
+
     this.router.navigate(['/login']);
   }
 
   private handleExpiredSession() {
     if (this.refreshToken()) {
       this.refreshSession().subscribe({
-        error: () => this.clearSession(),
+        error: () => this.clearSession('expired'),
       });
     } else {
-      this.clearSession();
+      this.clearSession('expired');
     }
   }
 }

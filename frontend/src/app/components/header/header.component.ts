@@ -22,6 +22,20 @@ export class HeaderComponent {
   authService = inject(AuthService);
   taskService = inject(TaskService);
   notificationService = inject(NotificationService);
+  showLogoutModal = false;
+
+  promptLogout() {
+    this.showLogoutModal = true;
+  }
+
+  cancelLogout() {
+    this.showLogoutModal = false;
+  }
+
+  confirmLogout() {
+    this.showLogoutModal = false;
+    this.authService.logout();
+  }
 
   openArchitectureDocs() {
     window.open('/docs/architecture-diagrams.html', '_blank');

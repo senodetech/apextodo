@@ -97,7 +97,7 @@
         </span>
       </div>
 
-      <button class="btn-logout" (click)="authService.logout()" title="Sign Out">
+      <button class="btn-logout" (click)="promptLogout()" title="Sign Out">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
           <polyline points="16 17 21 12 16 7"/>
@@ -107,3 +107,29 @@
     </div>
   </div>
 </header>
+
+<!-- Logout Confirmation Modal Window -->
+<div class="modal-backdrop" *ngIf="showLogoutModal" (click)="cancelLogout()">
+  <div class="modal-card logout-modal glass-card" (click)="$event.stopPropagation()">
+    <div class="logout-icon-wrap">
+      <div class="logout-warning-icon">🚪</div>
+    </div>
+    
+    <div class="logout-content">
+      <h3 class="logout-title">Sign Out of ApexTasks?</h3>
+      <p class="logout-desc">
+        Are you sure you want to end your active session, <strong class="user-highlight">{{ authService.currentUser()?.name || 'User' }}</strong>?
+      </p>
+    </div>
+
+    <div class="logout-modal-actions">
+      <button type="button" class="btn btn-secondary btn-cancel-logout" (click)="cancelLogout()">
+        No, Stay Signed In
+      </button>
+      <button type="button" class="btn btn-danger btn-confirm-logout" (click)="confirmLogout()">
+        Yes, Sign Out
+      </button>
+    </div>
+  </div>
+</div>
+

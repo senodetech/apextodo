@@ -1,0 +1,39 @@
+﻿<div class="toast-wrapper" *ngIf="toastService.toasts().length > 0" aria-live="polite">
+  <div
+    *ngFor="let toast of toastService.toasts()"
+    class="toast-card glass-card"
+    [ngClass]="['toast-' + toast.type, toast.isExiting ? 'toast-exit-left' : 'toast-enter-left']"
+    role="alert"
+  >
+    <div class="toast-indicator"></div>
+    
+    <div class="toast-icon-wrap">
+      <span class="toast-icon">{{ getIcon(toast.type) }}</span>
+    </div>
+
+    <div class="toast-body">
+      <h4 class="toast-title" *ngIf="toast.title">{{ toast.title }}</h4>
+      <p class="toast-message">{{ toast.message }}</p>
+    </div>
+
+    <button
+      type="button"
+      class="toast-close-btn"
+      (click)="onDismiss(toast.id)"
+      title="Dismiss notification"
+      aria-label="Close"
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+
+    <!-- Animated Progress Bar -->
+    <div
+      class="toast-progress-bar"
+      [style.animation-duration.ms]="toast.duration"
+      *ngIf="toast.duration > 0 && !toast.isExiting"
+    ></div>
+  </div>
+</div>
