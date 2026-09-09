@@ -169,3 +169,130 @@
 .link-highlight:hover {
   text-decoration: underline;
 }
+
+/* Demo 1-Click Access Card */
+.demo-access-card {
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.demo-header {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.demo-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.18);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.demo-subtitle {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin: 5px 0 0 0;
+}
+
+.demo-roles-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.demo-role-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: rgba(15, 23, 42, 0.65);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+}
+
+.demo-role-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.super-btn:hover:not(:disabled) {
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.18);
+}
+
+.admin-btn:hover:not(:disabled) {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.18);
+}
+
+.member-btn:hover:not(:disabled) {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.18);
+}
+
+.demo-role-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.role-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.role-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.role-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.role-desc {
+  font-size: 0.62rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 0 0 18px 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.auth-divider span {
+  padding: 0 10px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+

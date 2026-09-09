@@ -105,6 +105,24 @@ export class AuthService {
     );
   }
 
+  demoLogin(role: UserRole): Observable<AuthResponse> {
+    this.loading.set(true);
+    this.error.set(null);
+
+    return this.http.post<AuthResponse>(`${this.API_URL}/demo-login`, { role }).pipe(
+      tap((res) => {
+        this.handleAuthSuccess(res);
+        this.loading.set(false);
+      }),
+      catchError((err) => {
+        this.loading.set(false);
+        const msg = err.error?.message || 'Demo access failed. Please try again.';
+        this.error.set(Array.isArray(msg) ? msg.join(', ') : msg);
+        return throwError(() => err);
+      }),
+    );
+  }
+
   refreshSession(): Observable<AuthResponse> {
     const currentRefreshToken = this.refreshToken();
     if (!currentRefreshToken) {

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
-import { LoginInput } from '../../../models/user.model';
+import { LoginInput, UserRole } from '../../../models/user.model';
 import { BrandLogoComponent } from '../../shared/brand-logo/brand-logo.component';
 
 @Component({
@@ -16,6 +16,8 @@ import { BrandLogoComponent } from '../../shared/brand-logo/brand-logo.component
 export class LoginComponent implements OnInit {
   authService = inject(AuthService);
   router = inject(Router);
+
+  UserRole = UserRole;
 
   private readonly REMEMBER_ME_KEY = 'apex_remember_me_email';
 
@@ -35,6 +37,12 @@ export class LoginComponent implements OnInit {
     }
   }
 
+  quickDemoLogin(role: UserRole) {
+    this.authService.demoLogin(role).subscribe({
+      next: () => this.router.navigate(['/dashboard']),
+    });
+  }
+
   onSubmit() {
     if (!this.formData.email.trim() || !this.formData.password) return;
 
@@ -49,3 +57,4 @@ export class LoginComponent implements OnInit {
     });
   }
 }
+

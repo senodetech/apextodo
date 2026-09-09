@@ -25,6 +25,61 @@
         <span>{{ authService.error() }}</span>
       </div>
 
+      <!-- Quick Demo 1-Click Access for Visitors -->
+      <div class="demo-access-card">
+        <div class="demo-header">
+          <span class="demo-badge">⚡ Instant Test Access</span>
+          <p class="demo-subtitle">Explore live features without creating an account</p>
+        </div>
+        <div class="demo-roles-grid">
+          <button
+            type="button"
+            class="demo-role-btn super-btn"
+            (click)="quickDemoLogin(UserRole.SUPER_ADMIN)"
+            [disabled]="authService.loading()"
+            title="Log in as Super Admin with full system control & audit logs"
+          >
+            <span class="role-icon">👑</span>
+            <div class="role-info">
+              <span class="role-title">Super Admin</span>
+              <span class="role-desc">Full System & Audit</span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            class="demo-role-btn admin-btn"
+            (click)="quickDemoLogin(UserRole.ADMIN)"
+            [disabled]="authService.loading()"
+            title="Log in as Team Admin with user & task management"
+          >
+            <span class="role-icon">🛡️</span>
+            <div class="role-info">
+              <span class="role-title">Team Admin</span>
+              <span class="role-desc">Team & Tasks</span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            class="demo-role-btn member-btn"
+            (click)="quickDemoLogin(UserRole.USER)"
+            [disabled]="authService.loading()"
+            title="Log in as Team Member with personal workspace"
+          >
+            <span class="role-icon">👤</span>
+            <div class="role-info">
+              <span class="role-title">Member</span>
+              <span class="role-desc">Personal Board</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div class="auth-divider">
+        <span>or sign in with credentials</span>
+      </div>
+
       <form (ngSubmit)="onSubmit()" class="auth-form">
         <!-- Email -->
         <div class="form-group">

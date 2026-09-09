@@ -12,6 +12,7 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { DemoLoginDto } from './dto/demo-login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
@@ -33,6 +34,12 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   login(@Body() loginDto: LoginDto, @Req() req: Request) {
     return this.authService.login(loginDto, req);
+  }
+
+  @Post('demo-login')
+  @HttpCode(HttpStatus.OK)
+  demoLogin(@Body() demoLoginDto: DemoLoginDto, @Req() req: Request) {
+    return this.authService.demoLogin(demoLoginDto, req);
   }
 
   @Post('refresh')

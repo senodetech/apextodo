@@ -14,6 +14,7 @@ import { User, UserRole } from '../users/entities/user.entity';
 import { AuthLog, AuthLogAction } from './entities/auth-log.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { DemoLoginDto } from './dto/demo-login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import type { Request } from 'express';
 
@@ -213,6 +214,69 @@ export class AuthService {
       'SUCCESS',
       user.id,
       `User logged in successfully (Role: ${user.role})`,
+      req,
+    );
+
+    return {
+      user: this.sanitizeUser(user),
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
+  async demoLogin(demoLoginDto: DemoLoginDto, req?: Request) {
+    const { role } = demoLoginDto;
+
+    const demoProfiles: Record<UserRole, { email: string; name: string; role: UserRole }> = {
+      [UserRole.SUPER_ADMIN]: {
+        email: 'superadmin@apextodo.dev',
+        name: 'Demo Super Admin',
+        role: UserRole.SUPER_ADMIN,
+      },
+      [UserRole.ADMIN]: {
+        email: 'admin@apextodo.dev',
+        name: 'Demo Team Admin',
+        role: UserRole.ADMIN,
+      },
+      [UserRole.USER]: {
+        email: 'member@apextodo.dev',
+        name: 'Demo Team Member',
+        role: UserRole.USER,
+      },
+    };
+
+    const targetProfile = demoProfiles[role] || demoProfiles[UserRole.USER];
+
+    let user = await this.userRepository.findOne({
+      where: { email: targetProfile.email },
+    });
+
+    if (!user) {
+      const hashedPassword = await bcrypt.hash('Demo@123', 10);
+      user = this.userRepository.create({
+        name: targetProfile.name,
+        email: targetProfile.email,
+        password: hashedPassword,
+        role: targetProfile.role,
+        isActive: true,
+      });
+      await this.userRepository.save(user);
+    } else if (user.role !== targetProfile.role || !user.isActive) {
+      user.role = targetProfile.role;
+      user.isActive = true;
+      await this.userRepository.save(user);
+    }
+
+    const tokens = await this.generateTokens(user);
+    const hashedRefreshToken = await bcrypt.hash(tokens.refreshToken, 10);
+    await this.userRepository.update(user.id, { refreshToken: hashedRefreshToken });
+
+    await this.recordAuditLog(
+      AuthLogAction.LOGIN_SUCCESS,
+      user.email,
+      'SUCCESS',
+      user.id,
+      `Visitor 1-click test login as ${user.role}`,
       req,
     );
 
