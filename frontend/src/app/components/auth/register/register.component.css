@@ -162,3 +162,38 @@
 .link-highlight:hover {
   text-decoration: underline;
 }
+
+/* Field Validation Feedback */
+.form-input.input-error {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.4), 0 0 14px rgba(239, 68, 68, 0.22) !important;
+  background: rgba(239, 68, 68, 0.05) !important;
+}
+
+.field-error-msg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #f87171;
+  font-size: 0.78rem;
+  font-weight: 500;
+  margin-top: 6px;
+  animation: fieldFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.field-error-msg svg {
+  flex-shrink: 0;
+  stroke: #ef4444;
+}
+
+@keyframes fieldFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

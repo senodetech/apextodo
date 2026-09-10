@@ -29,6 +29,9 @@ export class LoginComponent implements OnInit {
     password: '',
   };
 
+  emailError: string | null = null;
+  passwordError: string | null = null;
+
   ngOnInit() {
     const savedEmail = localStorage.getItem(this.REMEMBER_ME_KEY);
     if (savedEmail) {
@@ -37,14 +40,57 @@ export class LoginComponent implements OnInit {
     }
   }
 
+  onEmailInput() {
+    if (this.emailError) {
+      this.validateEmail();
+    }
+  }
+
+  onPasswordInput() {
+    if (this.passwordError) {
+      this.validatePassword();
+    }
+  }
+
+  private validateEmail(): boolean {
+    const email = this.formData.email.trim();
+    if (!email) {
+      this.emailError = 'Email address is required.';
+      return false;
+    }
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailPattern.test(email)) {
+      this.emailError = 'Please enter a valid email address (e.g., name@company.com).';
+      return false;
+    }
+    this.emailError = null;
+    return true;
+  }
+
+  private validatePassword(): boolean {
+    if (!this.formData.password) {
+      this.passwordError = 'Password is required.';
+      return false;
+    }
+    this.passwordError = null;
+    return true;
+  }
+
   quickDemoLogin(role: UserRole) {
+    this.emailError = null;
+    this.passwordError = null;
     this.authService.demoLogin(role).subscribe({
       next: () => this.router.navigate(['/dashboard']),
     });
   }
 
   onSubmit() {
-    if (!this.formData.email.trim() || !this.formData.password) return;
+    const isEmailValid = this.validateEmail();
+    const isPasswordValid = this.validatePassword();
+
+    if (!isEmailValid || !isPasswordValid) {
+      return;
+    }
 
     if (this.rememberMe) {
       localStorage.setItem(this.REMEMBER_ME_KEY, this.formData.email.trim());

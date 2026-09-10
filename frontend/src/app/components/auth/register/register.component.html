@@ -34,7 +34,7 @@
         <span>{{ localError || authService.error() }}</span>
       </div>
 
-      <form (ngSubmit)="onSubmit()" class="auth-form">
+      <form (ngSubmit)="onSubmit()" class="auth-form" novalidate>
         <!-- Name -->
         <div class="form-group">
           <label class="form-label" for="reg-name">Full Name</label>
@@ -47,12 +47,21 @@
               id="reg-name"
               type="text"
               class="form-input with-icon"
+              [class.input-error]="!!nameError"
               placeholder="Alex Mercer"
               [(ngModel)]="name"
+              (input)="onNameInput()"
               name="name"
-              required
               autofocus
             />
+          </div>
+          <div *ngIf="nameError" class="field-error-msg">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ nameError }}</span>
           </div>
         </div>
 
@@ -68,11 +77,20 @@
               id="reg-email"
               type="email"
               class="form-input with-icon"
+              [class.input-error]="!!emailError"
               placeholder="alex@company.com"
               [(ngModel)]="email"
+              (input)="onEmailInput()"
               name="email"
-              required
             />
+          </div>
+          <div *ngIf="emailError" class="field-error-msg">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ emailError }}</span>
           </div>
         </div>
 
@@ -88,10 +106,11 @@
               id="reg-password"
               [type]="showPassword ? 'text' : 'password'"
               class="form-input with-icon"
+              [class.input-error]="!!passwordError"
               placeholder="••••••••"
               [(ngModel)]="password"
+              (input)="onPasswordInput()"
               name="password"
-              required
             />
             <button
               type="button"
@@ -101,6 +120,14 @@
             >
               {{ showPassword ? 'Hide' : 'Show' }}
             </button>
+          </div>
+          <div *ngIf="passwordError" class="field-error-msg">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ passwordError }}</span>
           </div>
         </div>
 
@@ -116,11 +143,20 @@
               id="reg-confirm"
               [type]="showPassword ? 'text' : 'password'"
               class="form-input with-icon"
+              [class.input-error]="!!confirmPasswordError"
               placeholder="••••••••"
               [(ngModel)]="confirmPassword"
+              (input)="onConfirmPasswordInput()"
               name="confirmPassword"
-              required
             />
+          </div>
+          <div *ngIf="confirmPasswordError" class="field-error-msg">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ confirmPasswordError }}</span>
           </div>
         </div>
 
@@ -128,7 +164,7 @@
         <button
           type="submit"
           class="btn btn-primary btn-block"
-          [disabled]="!name.trim() || !email.trim() || !password || authService.loading()"
+          [disabled]="authService.loading()"
         >
           <div *ngIf="authService.loading()" class="spinner-sm"></div>
           <span>{{ authService.loading() ? 'Creating account...' : 'Complete Registration' }}</span>

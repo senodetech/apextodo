@@ -80,7 +80,7 @@
         <span>or sign in with credentials</span>
       </div>
 
-      <form (ngSubmit)="onSubmit()" class="auth-form">
+      <form (ngSubmit)="onSubmit()" class="auth-form" novalidate>
         <!-- Email -->
         <div class="form-group">
           <label class="form-label" for="login-email">Email Address</label>
@@ -93,12 +93,21 @@
               id="login-email"
               type="email"
               class="form-input with-icon"
+              [class.input-error]="!!emailError"
               placeholder="name@company.com"
               [(ngModel)]="formData.email"
+              (input)="onEmailInput()"
               name="email"
-              required
               autofocus
             />
+          </div>
+          <div *ngIf="emailError" class="field-error-msg">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ emailError }}</span>
           </div>
         </div>
 
@@ -114,10 +123,11 @@
               id="login-password"
               [type]="showPassword ? 'text' : 'password'"
               class="form-input with-icon"
+              [class.input-error]="!!passwordError"
               placeholder="••••••••"
               [(ngModel)]="formData.password"
+              (input)="onPasswordInput()"
               name="password"
-              required
             />
             <button
               type="button"
@@ -127,6 +137,14 @@
             >
               {{ showPassword ? 'Hide' : 'Show' }}
             </button>
+          </div>
+          <div *ngIf="passwordError" class="field-error-msg">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ passwordError }}</span>
           </div>
         </div>
 
@@ -156,7 +174,7 @@
         <button
           type="submit"
           class="btn btn-primary btn-block"
-          [disabled]="!formData.email.trim() || !formData.password || authService.loading()"
+          [disabled]="authService.loading()"
         >
           <div *ngIf="authService.loading()" class="spinner-sm"></div>
           <span>{{ authService.loading() ? 'Signing in...' : 'Sign In to Dashboard' }}</span>
