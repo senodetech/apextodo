@@ -1,0 +1,28 @@
+﻿<div class="global-loader-backdrop" *ngIf="loadingService.isLoading()" aria-live="assertive" role="alert">
+  <div class="loader-modal glass-card">
+    <div class="wheel-spinner-container">
+      <!-- Outer Glowing Orbit Ring -->
+      <div class="spinner-ring outer-ring"></div>
+      <!-- Middle Counter-Rotating Ring -->
+      <div class="spinner-ring middle-ring"></div>
+      <!-- Inner Pulsing Ring -->
+      <div class="spinner-ring inner-ring"></div>
+      <!-- Center Glowing Brand Core -->
+      <div class="center-core">
+        <span class="core-logo">⚡</span>
+      </div>
+    </div>
+
+    <div class="loader-text-wrap">
+      <h3 class="loader-title">{{ loadingService.message() }}</h3>
+      <p class="loader-note" *ngIf="loadingService.isSlow()">
+        Free server instance is waking up from sleep. This takes a few seconds on first request.
+      </p>
+    </div>
+
+    <!-- Animated Smooth Shimmer Progress Bar -->
+    <div class="loader-shimmer-bar">
+      <div class="shimmer-indicator"></div>
+    </div>
+  </div>
+</div>
